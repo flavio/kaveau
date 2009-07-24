@@ -8,12 +8,15 @@ set(kaveau_app_SRC
     main.cpp
     mainwindow.cpp
     addbackupdialog.cpp
+    addbackupwizard.cpp
+    addbackupwizardpage1.cpp
 )
 
 kde4_add_ui_files(
   kaveau_app_SRC
   mainwidgetbase.ui
   addbackupwidget.ui
+  addbackupwizardpage1view.ui
 )
 
 kde4_add_executable(kaveau ${kaveau_app_SRC})

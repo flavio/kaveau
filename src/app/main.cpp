@@ -24,8 +24,6 @@
 
 #include "mainwindow.h"
 
-#include <kdebug.h>
-
 int main (int argc, char *argv[])
 {
   KAboutData aboutData( "kaveau", 0, ki18n("kaveau"), "0.0.1",

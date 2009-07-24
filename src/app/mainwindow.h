@@ -47,6 +47,7 @@ class MainWindow : public KXmlGuiWindow
     void setupConnections();
     void setupTrayIcon();
     void updateBackupView();
+    bool isBackupDiskPlugged();
 
   private slots:
     void slotConfigBackup();
@@ -59,6 +60,7 @@ class MainWindow : public KXmlGuiWindow
     Ui::MainWidgetBase* m_mainWidget;
     KSystemTrayIcon* m_trayIcon;
     BackupThread* m_backupThread;
+    bool m_backupDiskPlugged;
 };
 
 #endif

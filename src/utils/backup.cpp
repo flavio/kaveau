@@ -25,26 +25,19 @@ Backup::Backup()
 {
 }
 
-Backup::Backup( QString source, QString dest,
+Backup::Backup( QString source, QString diskUdi, QString dest,
                 QStringList excludeList,
                 QDateTime lastBackupTime)
 {
   m_source = source;
   m_dest = dest;
+  m_diskUdi = diskUdi;
   m_excludeList = excludeList;
   m_lastBackupTime = lastBackupTime;
 }
 
 Backup::~Backup()
 {
-}
-
-void Backup::clean()
-{
-  m_source = "";
-  m_dest = "";
-  m_excludeList.clear();
-  m_lastBackupTime = QDateTime();
 }
 
 QString Backup::source() const
@@ -65,6 +58,16 @@ QString Backup::dest() const
 void Backup::setDest(QString dest)
 {
   m_dest = dest;
+}
+
+QString Backup::diskUdi() const
+{
+  return m_diskUdi;
+}
+
+void Backup::setDiskUdi(QString uid)
+{
+  m_diskUdi = uid;
 }
 
 QStringList Backup::excludeList() const

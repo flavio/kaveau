@@ -72,10 +72,11 @@ void ConfigManager::loadConfigFile()
     KConfigGroup group = m_config->group(*it);
     QString source = group.readEntry("Source");
     QString dest = group.readEntry("Dest");
+    QString diskUdi = group.readEntry("DiskUdi");
     QStringList excludeList = group.readEntry("ExcludeList", QStringList());
     QDateTime lastBackupTime = group.readEntry("LastBackupTime", QDateTime());
 
-    setBackup(new Backup(source, dest, excludeList, lastBackupTime));
+    setBackup(new Backup(source, diskUdi, dest, excludeList, lastBackupTime));
   }
 }
 
@@ -98,6 +99,7 @@ void ConfigManager::saveConfigFile()
     KConfigGroup configGroup = m_config->group("Backup");
     configGroup.writeEntry( "Source", m_backup->source());
     configGroup.writeEntry( "Dest", m_backup->dest());
+    configGroup.writeEntry( "DiskUdi", m_backup->diskUdi());
     configGroup.writeEntry( "ExcludeList", m_backup->excludeList());
     configGroup.writeEntry( "LastBackupTime", m_backup->lastBackupTime());
     configGroup.sync();

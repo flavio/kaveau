@@ -116,3 +116,12 @@ Name[x-test]=xxBackup Startedxx
 Comment=Backup started
 Comment[x-test]=xxBackup startedxx
 Action=Popup
+
+[Event/storageDeviceAttached]
+Name=Storage device attached
+Name[x-test]=xxStorage device attachedxx
+Comment=Storage device attached
+Comment[x-test]=xxStorage device attachedxx
+Action=Popup
+Persistent=True
+

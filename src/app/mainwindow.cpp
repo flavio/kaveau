@@ -21,6 +21,7 @@
 #include "mainwindow.h"
 
 #include <QtGui/QCloseEvent>
+#include <QtCore/QTimer>
 #include <KApplication>
 #include <KAction>
 #include <KDebug>
@@ -39,6 +40,7 @@
 
 #include "ui_mainwidgetbase.h"
 #include "addbackupdialog.h"
+#include "addbackupwizard.h"
 #include "backup.h"
 #include "configmanager.h"
 #include "backupthread.h"
@@ -64,6 +66,8 @@ MainWindow::MainWindow(QWidget *parent)
 
   m_backupThread = new BackupThread();
   connect (m_backupThread, SIGNAL(backupFinished(bool,QString)), this, SLOT(slotBackupFinished(bool, QString)));
+
+  m_backupDiskPlugged = isBackupDiskPlugged();
 }
 
 MainWindow::~MainWindow()
@@ -96,11 +100,14 @@ void MainWindow::setupConnections()
 
 void MainWindow::slotConfigBackup()
 {
-  AddBackupDialog dialog(ConfigManager::global()->backup(), this);
-  if (dialog.exec() == QDialog::Accepted) {
-    ConfigManager::global()->setBackup(dialog.backup());
-    updateBackupView();
-  }
+  AddBackupWizard wizard(this);
+  wizard.exec();
+
+//  AddBackupDialog dialog(ConfigManager::global()->backup(), this);
+//  if (dialog.exec() == QDialog::Accepted) {
+//    ConfigManager::global()->setBackup(dialog.backup());
+//    updateBackupView();
+//  }
 }
 
  void MainWindow::closeEvent(QCloseEvent *event)
@@ -185,13 +192,32 @@ void MainWindow::slotBackupFinished(bool status, QString message)
   notification->sendEvent();
 }
 
-void MainWindow::slotDeviceAdded(QString uid)
+void MainWindow::slotDeviceAdded(QString udi)
 {
-  Solid::Device device(uid);
+  Solid::Device device(udi);
 
-  if (device.isDeviceInterface(Solid::DeviceInterface::StorageVolume))
-    kDebug() << "Storage volume attached";
+  Backup* backup = ConfigManager::global()->backup();
 
+  if (!m_backupDiskPlugged && (device.isDeviceInterface(Solid::DeviceInterface::StorageDrive))) {
+    Solid::StorageDrive* drive = (Solid::StorageDrive*) device.asDeviceInterface(Solid::DeviceInterface::StorageDrive);
+
+    if ((drive->driveType() == Solid::StorageDrive::HardDisk) && ((drive->bus() == Solid::StorageDrive::Usb) || (drive->bus() == Solid::StorageDrive::Ieee1394))) {
+      if (backup == 0) {
+        KNotification *notify = new KNotification( "storageDeviceAttached", parentWidget() );
+        notify->setText( QString( "An external storage device has been attached." ) );
+        notify->setActions( i18n( "Use it with kaveau" ).split( ',' ) );
+        connect( notify, SIGNAL( action1Activated() ), this , SLOT( slotConfigBackup()));
+        notify->sendEvent();
+        QTimer::singleShot( 10*1000, notify, SLOT( close() ) );
+      } else if (backup->diskUdi() == udi) {
+        // external disk used for backups has been attached
+      }
+    }
+  }
+}
+
+bool MainWindow::isBackupDiskPlugged()
+{
 //  foreach (const Solid::Device &device, Solid::Device::listFromType(Solid::DeviceInterface::StorageDrive, QString()))
 //  {
 //    Solid::StorageDrive storage = device.asDeviceInterface(Solid::DeviceInterface::StorageDrive);
@@ -201,9 +227,10 @@ void MainWindow::slotDeviceAdded(QString uid)
 //    kDebug() << storage.bus()
 //  }
 
+  return false;
 }
 
-void MainWindow::slotDeviceRemoved(QString uid)
+void MainWindow::slotDeviceRemoved(QString udi)
 {
 
 }
