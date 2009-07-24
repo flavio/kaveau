@@ -15,8 +15,11 @@ class AddBackupWizardPage1 : public QWizardPage
     AddBackupWizardPage1(QWidget* parent = 0);
     virtual ~AddBackupWizardPage1();
 
+    bool isComplete () const;
+
   private slots:
     void slotRefresh();
+    void slotDeviceItemSelectionChanged();
 
   signals:
     void completeChanged();

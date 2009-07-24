@@ -24,6 +24,7 @@ AddBackupWizardPage1::AddBackupWizardPage1(QWidget* parent)
   setLayout(layout);
 
   connect (m_view->btnRefresh, SIGNAL(clicked()), this, SLOT(slotRefresh()));
+  connect (m_view->devicesWidget, SIGNAL(itemSelectionChanged()), this, SLOT(slotDeviceItemSelectionChanged()));
   populateDeviceView();
 }
 
@@ -36,7 +37,7 @@ void AddBackupWizardPage1::slotRefresh() {
   populateDeviceView();
 }
 
-QString bytesToHuman(qlonglong value) const
+QString bytesToHuman(qlonglong value)
 {
 
 }
@@ -73,5 +74,24 @@ void AddBackupWizardPage1::populateDeviceView()
 
   m_view->devicesWidget->insertTopLevelItems(0, items);
 
+}
+bool AddBackupWizardPage1::isComplete () const
+{
+  QList<QTreeWidgetItem*> items = m_view->devicesWidget->selectedItems();
+  if (items.isEmpty()) {
+    return false;
+  } else {
+    foreach (QTreeWidgetItem* item, items) {
+      if (item->parent() == 0)
+        return false;
+    }
+  }
+
+  return true;
+}
+
+void AddBackupWizardPage1::slotDeviceItemSelectionChanged()
+{
+  emit completeChanged();
 }
 

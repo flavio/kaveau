@@ -23,6 +23,7 @@
 #include <QtGui/QWizardPage>
 
 class AddBackupWizardPage1;
+class AddBackupWizardPage2;
 
 class AddBackupWizard: public QWizard
 {
@@ -35,6 +36,7 @@ private:
 	void initView();
 
   AddBackupWizardPage1* page1;
+  AddBackupWizardPage2* page2;
 };
 
 #endif

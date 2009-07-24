@@ -19,6 +19,7 @@
 #include "addbackupwizard.h"
 
 #include "addbackupwizardpage1.h"
+#include "addbackupwizardpage2.h"
 
 #include <qpushbutton.h>
 #include <KIconLoader>
@@ -26,18 +27,21 @@
 
 AddBackupWizard::AddBackupWizard(QWidget *parent): QWizard( parent )
 {
-	initView();
-	
-	setWindowTitle( i18n("Add a backup") );
-	
-	connect( QWizard::button(QWizard::FinishButton), SIGNAL( clicked()), this, SLOT( slotFinishClicked() ) );
+  initView();
+
+  setWindowTitle( i18n("Add a backup") );
+
+  connect( QWizard::button(QWizard::FinishButton), SIGNAL( clicked()), this, SLOT( slotFinishClicked() ) );
 }
 
 void AddBackupWizard::initView()
 {
   KIconLoader* loader = KIconLoader::global();
   setWindowIcon( loader->loadIcon( "wizard", KIconLoader::Small ));
-	
+
   page1 = new AddBackupWizardPage1(this);
-	addPage(page1);
+  addPage(page1);
+
+  page2 = new AddBackupWizardPage2(this);
+  addPage(page2);
 }
