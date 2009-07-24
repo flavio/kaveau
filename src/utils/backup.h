@@ -30,7 +30,7 @@ class Backup
   public:
     Backup( QString source, QString diskUdi, QString dest,
             QStringList excludeList,
-            QDateTime lastBackupTime);
+            QDateTime lastBackupTime = QDateTime());
     Backup();
     ~Backup();
 

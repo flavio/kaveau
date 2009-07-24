@@ -1,3 +1,23 @@
+/* This file is part of kaveau
+ *
+ * Copyright (C) 2009 Flavio Castelli <flavio@castelli.name>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU Library General Public License
+ * along with kaveau; see the file COPYING.LIB.  If not, write to
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
+ */
+
 #include "addbackupwizardpage1.h"
 
 #include "ui_addbackupwizardpage1view.h"
@@ -26,6 +46,10 @@ AddBackupWizardPage1::AddBackupWizardPage1(QWidget* parent)
   connect (m_view->btnRefresh, SIGNAL(clicked()), this, SLOT(slotRefresh()));
   connect (m_view->devicesWidget, SIGNAL(itemSelectionChanged()), this, SLOT(slotDeviceItemSelectionChanged()));
   populateDeviceView();
+
+  // this item is used just for accessing the selected UDI from other pages
+  m_view->selectedUDI->hide();
+  registerField("deviceUDI", m_view->selectedUDI);
 }
 
 AddBackupWizardPage1::~AddBackupWizardPage1()
@@ -67,6 +91,9 @@ void AddBackupWizardPage1::populateDeviceView()
         size.setNum(storage->size());
         columns << size;
 
+        // this column is not displayed
+        columns << volumeDevice.udi();
+
         items.append(new QTreeWidgetItem(deviceItem, columns));
       }
     }
@@ -75,18 +102,23 @@ void AddBackupWizardPage1::populateDeviceView()
   m_view->devicesWidget->insertTopLevelItems(0, items);
 
 }
+
 bool AddBackupWizardPage1::isComplete () const
 {
   QList<QTreeWidgetItem*> items = m_view->devicesWidget->selectedItems();
   if (items.isEmpty()) {
+    m_view->selectedUDI->clear();
     return false;
   } else {
     foreach (QTreeWidgetItem* item, items) {
-      if (item->parent() == 0)
+      if (item->parent() == 0) {
+        m_view->selectedUDI->clear();
         return false;
+      }
     }
   }
 
+  m_view->selectedUDI->setText(items[0]->data(4,Qt::DisplayRole).toString());
   return true;
 }
 

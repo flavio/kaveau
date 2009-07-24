@@ -102,6 +102,10 @@ void MainWindow::slotConfigBackup()
 {
   AddBackupWizard wizard(this);
   wizard.exec();
+  if (wizard.completed()) {
+     ConfigManager::global()->setBackup(wizard.backup());
+    updateBackupView();
+  }
 
 //  AddBackupDialog dialog(ConfigManager::global()->backup(), this);
 //  if (dialog.exec() == QDialog::Accepted) {

@@ -18,39 +18,42 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef ADDBACKUPWIZARDPAGE2_H
-#define ADDBACKUPWIZARDPAGE2_H
+#ifndef ADDBACKUPWIZARDPAGE3_H
+#define ADDBACKUPWIZARDPAGE3_H
 
 #include <QtGui/QWizardPage>
 
+#include <solid/solidnamespace.h>
+
 namespace Ui {
-  class AddBackupWizardPage2View;
+  class AddBackupWizardPage3View;
 }
 
-class AddBackupWizardPage2 : public QWizardPage
+class AddBackupWizardPage3 : public QWizardPage
 {
   Q_OBJECT
 
   public:
-    AddBackupWizardPage2(QWidget* parent = 0);
-    virtual ~AddBackupWizardPage2();
+    AddBackupWizardPage3(QWidget* parent = 0);
+    virtual ~AddBackupWizardPage3();
 
-    QStringList excludedDirs();
+    bool isComplete () const;
+    void initializePage();
+    QString destination() const;
+    QString deviceUDI() const;
 
   signals:
     void completeChanged();
 
   private slots:
-    void slotBtnExcludeClicked();
-    void slotBtnRemoveClicked();
-    void slotExcludeChanged();
-    void sloExcludedItemsSelectionChanged();
+    void slotDestChanged();
+    void slotSetupDone(Solid::ErrorType,QVariant,QString);
 
   private:
-    void populateDeviceView();
     void setupConnections();
+    void checkDeviceStatus();
 
-    Ui::AddBackupWizardPage2View* m_view;
+    Ui::AddBackupWizardPage3View* m_view;
 };
 
-#endif // ADDBACKUPWIZARDPAGE2_H
+#endif // ADDBACKUPWIZARDPAGE3_H
