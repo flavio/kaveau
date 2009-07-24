@@ -23,6 +23,8 @@
 
 #include <KXmlGuiWindow>
 
+#include <solid/solidnamespace.h>
+
 namespace Ui {
   class MainWidgetBase;
 }
@@ -46,15 +48,24 @@ class MainWindow : public KXmlGuiWindow
     void setupActions();
     void setupConnections();
     void setupTrayIcon();
+
     void updateBackupView();
+    void showGenericError(const QString& message, bool disableBackup = true);
+
     bool isBackupDiskPlugged();
+    void mountBackupPartition();
+
+    void backupIfNeeded();
+
+    bool isRdiffAvailable();
 
   private slots:
-    void slotConfigBackup();
+    void slotStartBackupWizard();
     void slotStartBackup();
     void slotBackupFinished(bool, QString);
     void slotDeviceAdded(QString);
     void slotDeviceRemoved(QString);
+    void slotBackupPartitionMounted(Solid::ErrorType error,QVariant message,QString udi);
 
   private:
     Ui::MainWidgetBase* m_mainWidget;

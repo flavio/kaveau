@@ -21,6 +21,7 @@
 #include "mainwindow.h"
 
 #include <QtGui/QCloseEvent>
+#include <QtCore/QFileInfo>
 #include <QtCore/QTimer>
 #include <KApplication>
 #include <KAction>
@@ -37,13 +38,25 @@
 #include <solid/device.h>
 #include <solid/deviceinterface.h>
 #include <solid/storagedrive.h>
+#include <solid/storageaccess.h>
 
 #include "ui_mainwidgetbase.h"
 #include "addbackupdialog.h"
 #include "addbackupwizard.h"
 #include "backup.h"
 #include "configmanager.h"
+#include "rdiffmanager.h"
 #include "backupthread.h"
+
+
+#define BACKUP_INTERVAL 3600
+
+// stacked widget pages
+#define CONFIGURE_PAGE 0
+#define DOING_BACKUP_PAGE 1
+#define SUCCESS_PAGE 2
+#define FAILURE_PAGE 3
+#define GENERIC_ERROR_PAGE 4
 
 MainWindow::MainWindow(QWidget *parent)
   : KXmlGuiWindow(parent)
@@ -60,14 +73,17 @@ MainWindow::MainWindow(QWidget *parent)
   setupTrayIcon();
   setupConnections();
 
-  updateBackupView();
-
-  m_mainWidget->progressBox->hide();
-
   m_backupThread = new BackupThread();
   connect (m_backupThread, SIGNAL(backupFinished(bool,QString)), this, SLOT(slotBackupFinished(bool, QString)));
 
   m_backupDiskPlugged = isBackupDiskPlugged();
+
+  if (!isRdiffAvailable()) {
+    showGenericError(i18n("rdiff-backup is not installed"));
+  } else if (m_backupDiskPlugged)
+    mountBackupPartition();
+
+  updateBackupView();
 }
 
 MainWindow::~MainWindow()
@@ -90,7 +106,7 @@ void MainWindow::setupTrayIcon()
 
 void MainWindow::setupConnections()
 {
-  connect (m_mainWidget->btnConfig, SIGNAL(clicked()), this, SLOT(slotConfigBackup()));
+  connect (m_mainWidget->btnConfig, SIGNAL(clicked()), this, SLOT(slotStartBackupWizard()));
   connect (m_mainWidget->btnBackup, SIGNAL(clicked()), this, SLOT(slotStartBackup()));
 
   Solid::DeviceNotifier* notifier = Solid::DeviceNotifier::instance();
@@ -98,7 +114,7 @@ void MainWindow::setupConnections()
   connect (notifier, SIGNAL(deviceRemoved(QString)), this, SLOT(slotDeviceRemoved(QString)));
 }
 
-void MainWindow::slotConfigBackup()
+void MainWindow::slotStartBackupWizard()
 {
   AddBackupWizard wizard(this);
   wizard.exec();
@@ -106,12 +122,6 @@ void MainWindow::slotConfigBackup()
      ConfigManager::global()->setBackup(wizard.backup());
     updateBackupView();
   }
-
-//  AddBackupDialog dialog(ConfigManager::global()->backup(), this);
-//  if (dialog.exec() == QDialog::Accepted) {
-//    ConfigManager::global()->setBackup(dialog.backup());
-//    updateBackupView();
-//  }
 }
 
  void MainWindow::closeEvent(QCloseEvent *event)
@@ -132,40 +142,51 @@ void MainWindow::updateBackupView()
   ConfigManager* backupManager = ConfigManager::global();
   Backup* backup = backupManager->backup();
 
-  if (backup == 0) {
-    //TODO do something better
-    slotConfigBackup();
-    updateBackupView();
-  } else {
-    m_mainWidget->labelSource->setText( backup->source());
-    m_mainWidget->labelDest->setText( backup->dest());
-    KIconLoader* iconLoader = KIconLoader::global();
+  if (backup == 0)
+    return;
 
-    if (backup->lastBackupTime().isValid()) {
-      QDateTime now = QDateTime::currentDateTime();
-      int daysTo = backup->lastBackupTime().daysTo(now);
+  m_mainWidget->labelSource->setText( backup->source());
+  m_mainWidget->labelDest->setText( backup->dest());
+  KIconLoader* iconLoader = KIconLoader::global();
 
-      if (daysTo > 7) {
-        m_mainWidget->labelTime->setText(i18n("more than one week ago"));
-        m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-low", KIconLoader::Small));
-      } else if (daysTo > 0) {
-        m_mainWidget->labelTime->setText(i18n("%1 day(s) ago").arg(daysTo));
-        m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-medium", KIconLoader::Small));
-      } else {
-        m_mainWidget->labelTime->setText(i18n("Today at %1").arg(backup->lastBackupTime().toString("hh:mm")));
-        m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-high", KIconLoader::Small));
-      }
-    } else {
-      m_mainWidget->labelTime->setText(i18n("never"));
+  if (backup->lastBackupTime().isValid()) {
+    QDateTime now = QDateTime::currentDateTime();
+    int daysTo = backup->lastBackupTime().daysTo(now);
+
+    if (daysTo > 7) {
+      m_mainWidget->labelTime->setText(i18n("more than one week ago"));
       m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-low", KIconLoader::Small));
+    } else if (daysTo > 0) {
+      m_mainWidget->labelTime->setText(i18n("%1 day(s) ago").arg(daysTo));
+      m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-medium", KIconLoader::Small));
+    } else {
+      m_mainWidget->labelTime->setText(i18n("Today at %1").arg(backup->lastBackupTime().toString("hh:mm")));
+      m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-high", KIconLoader::Small));
     }
+  } else {
+    m_mainWidget->labelTime->setText(i18n("never"));
+    m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-low", KIconLoader::Small));
   }
+
+  if (m_backupDiskPlugged)
+    m_mainWidget->labelDevice->setText (i18n("Connected"));
+  else
+    m_mainWidget->labelDevice->setText (i18n("Not connected"));
 }
 
 void MainWindow::slotStartBackup() {
-  m_mainWidget->progressBox->show();
+  if (!m_backupDiskPlugged)
+    return;
+
+  if (m_backupThread->isRunning()) {
+    QTimer::singleShot( BACKUP_INTERVAL*1000, this, SLOT( slotStartBackup()));
+    return;
+  }
+
+  m_mainWidget->stackedWidget->setCurrentIndex(DOING_BACKUP_PAGE);
+  m_mainWidget->labelNextBackup->setText("-");
+
   m_backupThread->start();
-  kDebug() << "backup started";
 
   KNotification* notification= new KNotification ( "backupStarted", this );
   notification->setText( i18n("Backup started"));
@@ -176,17 +197,22 @@ void MainWindow::slotStartBackup() {
 void MainWindow::slotBackupFinished(bool status, QString message)
 {
   KNotification* notification;
-  m_mainWidget->progressBox->hide();
 
   if (status) {
     kDebug() << "backup completed successfully";
+    m_mainWidget->stackedWidget->setCurrentIndex(SUCCESS_PAGE);
 
     notification= new KNotification ( "backupSuccess", this );
     notification->setText( i18n("Backup successfully completed"));
     notification->setFlags( KNotification::RaiseWidgetOnActivation);
+
+    QDateTime now = QDateTime::currentDateTime();
+    ConfigManager::global()->backup()->setLastBackupTime(now);
   }
   else {
     kDebug() << "error during backup:" << message;
+
+    m_mainWidget->stackedWidget->setCurrentIndex(FAILURE_PAGE);
 
     notification= new KNotification ( "backupError", this );
     notification->setText( i18n("Backup failed"));
@@ -194,6 +220,10 @@ void MainWindow::slotBackupFinished(bool status, QString message)
   }
 
   notification->sendEvent();
+
+  // schedule next backup
+  QTimer::singleShot( BACKUP_INTERVAL*1000, this, SLOT( slotStartBackup()));
+  updateBackupView();
 }
 
 void MainWindow::slotDeviceAdded(QString udi)
@@ -202,41 +232,119 @@ void MainWindow::slotDeviceAdded(QString udi)
 
   Backup* backup = ConfigManager::global()->backup();
 
-  if (!m_backupDiskPlugged && (device.isDeviceInterface(Solid::DeviceInterface::StorageDrive))) {
+  if (m_backupDiskPlugged)
+    return;
+
+  if ((backup != 0) && (backup->diskUdi().compare(udi, Qt::CaseSensitive) == 0)) {
+    m_mainWidget->labelDevice->setText (i18n ("Connected"));
+    m_backupDiskPlugged = true;
+    mountBackupPartition();
+  } else if ((backup == 0)  && (device.isDeviceInterface(Solid::DeviceInterface::StorageDrive))) {
+
     Solid::StorageDrive* drive = (Solid::StorageDrive*) device.asDeviceInterface(Solid::DeviceInterface::StorageDrive);
 
     if ((drive->driveType() == Solid::StorageDrive::HardDisk) && ((drive->bus() == Solid::StorageDrive::Usb) || (drive->bus() == Solid::StorageDrive::Ieee1394))) {
-      if (backup == 0) {
-        KNotification *notify = new KNotification( "storageDeviceAttached", parentWidget() );
-        notify->setText( QString( "An external storage device has been attached." ) );
-        notify->setActions( i18n( "Use it with kaveau" ).split( ',' ) );
-        connect( notify, SIGNAL( action1Activated() ), this , SLOT( slotConfigBackup()));
-        notify->sendEvent();
-        QTimer::singleShot( 10*1000, notify, SLOT( close() ) );
-      } else if (backup->diskUdi() == udi) {
-        // external disk used for backups has been attached
-      }
+      KNotification *notify = new KNotification( "storageDeviceAttached", parentWidget() );
+      notify->setText( QString( "An external storage device has been attached." ) );
+      notify->setActions( i18n( "Use it with kaveau" ).split( ',' ) );
+      connect( notify, SIGNAL( action1Activated() ), this , SLOT( slotStartBackupWizard()));
+      notify->sendEvent();
+      QTimer::singleShot( 10*1000, notify, SLOT( close() ) );
     }
+  }
+}
+
+void MainWindow::slotDeviceRemoved(QString udi)
+{
+  if (ConfigManager::global()->backup()->diskUdi().compare(udi,Qt::CaseSensitive) == 0) {
+    m_mainWidget->labelDevice->setText (i18n ("Not Connected"));
+    m_mainWidget->btnBackup->setEnabled(false);
+    m_backupDiskPlugged = false;
+  }
+}
+
+
+void MainWindow::backupIfNeeded()
+{
+  if (!m_backupDiskPlugged) {
+    m_mainWidget->labelNextBackup->setText(i18n("next time the backup disk will be plugged"));
+    return;
+  }
+
+  Backup* backup = ConfigManager::global()->backup();
+  QDateTime lastBackup = backup->lastBackupTime();
+  QDateTime now = QDateTime::currentDateTime();
+
+  if ((!lastBackup.isValid()) or (lastBackup.secsTo(now) > BACKUP_INTERVAL)) {
+    // perform the backup immediately
+    slotStartBackup();
+  } else {
+    // schedule the backup
+    QTimer::singleShot( (BACKUP_INTERVAL - lastBackup.secsTo(now))*1000, this, SLOT( slotStartBackup()));
+    QDateTime nextRun = now.addSecs(BACKUP_INTERVAL - lastBackup.secsTo(now));
+    m_mainWidget->labelNextBackup->setText(nextRun.toString("hh:mm"));
   }
 }
 
 bool MainWindow::isBackupDiskPlugged()
 {
-//  foreach (const Solid::Device &device, Solid::Device::listFromType(Solid::DeviceInterface::StorageDrive, QString()))
-//  {
-//    Solid::StorageDrive storage = device.asDeviceInterface(Solid::DeviceInterface::StorageDrive);
-//    if ((storage.bus() != Solid::StorageDrive::Usb) || (storage.bus() != Solid::StorageDrive::Ieee1394))
-//      continue;
-//    kDebug() << device.udi().toLatin1().constData() << device.vendor().toLatin1().constData() << device.product().toLatin1().constData();
-//    kDebug() << storage.bus()
-//  }
+  Backup* backup = ConfigManager::global()->backup();
 
-  return false;
+  if (backup == 0)
+    return false;
+
+  Solid::Device device (backup->diskUdi());
+  if (device.isValid())
+    return true;
+  else
+    return false;
 }
 
-void MainWindow::slotDeviceRemoved(QString udi)
+void MainWindow::mountBackupPartition()
 {
+  Solid::Device device (ConfigManager::global()->backup()->diskUdi());
+  Solid::StorageAccess* storageAccess = (Solid::StorageAccess*) device.asDeviceInterface(Solid::DeviceInterface::StorageAccess);
 
+  if (storageAccess->isAccessible()) {
+    slotBackupPartitionMounted(Solid::NoError, QVariant(), ConfigManager::global()->backup()->diskUdi());
+    return;
+  }
+
+  connect(storageAccess, SIGNAL(setupDone(Solid::ErrorType,QVariant,QString)), this, SLOT(slotBackupPartitionMounted(Solid::ErrorType,QVariant,QString)));
+  storageAccess->setup();
 }
 
+void MainWindow::slotBackupPartitionMounted(Solid::ErrorType error,QVariant message,QString udi)
+{
+  Q_UNUSED(message)
+
+  if (error == Solid::NoError) {
+    Solid::Device device (udi);
+    Solid::StorageAccess* storageAccess = (Solid::StorageAccess*) device.asDeviceInterface(Solid::DeviceInterface::StorageAccess);
+
+    QFileInfo info (storageAccess->filePath());
+
+    if (info.isWritable()) {
+      backupIfNeeded();
+    } else {
+      showGenericError(i18n("No write permission on the backup directory"));
+    }
+  }
+  else {
+    showGenericError(i18n("unable to mount backup partition"));
+  }
+}
+
+bool MainWindow::isRdiffAvailable()
+{
+  RdiffManager manager;
+  return manager.isRdiffAvailable();
+}
+
+void MainWindow::showGenericError(const QString& message, bool disableBackup)
+{
+  m_mainWidget->stackedWidget->setCurrentIndex(GENERIC_ERROR_PAGE);
+  m_mainWidget->labelGenericError->setText(message);
+  m_mainWidget->btnBackup->setEnabled(!disableBackup);
+}
 
