@@ -49,7 +49,7 @@
 #include "backupthread.h"
 
 
-#define BACKUP_INTERVAL 3600
+#define BACKUP_INTERVAL 3600 // backup every hour
 
 // stacked widget pages
 #define CONFIGURE_PAGE 0
@@ -222,7 +222,7 @@ void MainWindow::slotBackupFinished(bool status, QString message)
   notification->sendEvent();
 
   // schedule next backup
-  QTimer::singleShot( BACKUP_INTERVAL*1000, this, SLOT( slotStartBackup()));
+  scheduleNextBackup( BACKUP_INTERVAL );
   updateBackupView();
 }
 
@@ -280,10 +280,16 @@ void MainWindow::backupIfNeeded()
     slotStartBackup();
   } else {
     // schedule the backup
-    QTimer::singleShot( (BACKUP_INTERVAL - lastBackup.secsTo(now))*1000, this, SLOT( slotStartBackup()));
-    QDateTime nextRun = now.addSecs(BACKUP_INTERVAL - lastBackup.secsTo(now));
-    m_mainWidget->labelNextBackup->setText(nextRun.toString("hh:mm"));
+    scheduleNextBackup(BACKUP_INTERVAL - lastBackup.secsTo(now));
   }
+}
+
+void MainWindow::scheduleNextBackup(int whithinSeconds)
+{
+  QTimer::singleShot( whithinSeconds*1000, this, SLOT( slotStartBackup()));
+
+  QDateTime nextRun = QDateTime::currentDateTime().addSecs(whithinSeconds);
+  m_mainWidget->labelNextBackup->setText(nextRun.toString("hh:mm"));
 }
 
 bool MainWindow::isBackupDiskPlugged()

@@ -54,10 +54,10 @@ class MainWindow : public KXmlGuiWindow
 
     bool isBackupDiskPlugged();
     void mountBackupPartition();
+    bool isRdiffAvailable();
 
     void backupIfNeeded();
-
-    bool isRdiffAvailable();
+    void scheduleNextBackup(int);
 
   private slots:
     void slotStartBackupWizard();
