@@ -20,18 +20,19 @@
 
 #include "mainwindow.h"
 
+#include <kapplication.h>
+#include <kaction.h>
+#include <klocale.h>
+#include <kactioncollection.h>
+#include <kiconloader.h>
+#include <kmessagebox.h>
+#include <knotification.h>
+#include <kstandardaction.h>
+#include <ksystemtrayicon.h>
 #include <QtGui/QCloseEvent>
 #include <QtCore/QFileInfo>
 #include <QtCore/QTimer>
-#include <KApplication>
-#include <KAction>
-#include <KDebug>
-#include <KLocale>
-#include <KActionCollection>
-#include <KIconLoader>
-#include <KNotification>
-#include <KStandardAction>
-#include <KSystemTrayIcon>
+
 
 //solid specific includes
 #include <solid/devicenotifier.h>
@@ -48,6 +49,7 @@
 #include "rdiffmanager.h"
 #include "backupthread.h"
 
+#include <KDebug>
 
 #define BACKUP_INTERVAL 3600 // backup every hour
 
@@ -126,14 +128,16 @@ void MainWindow::slotStartBackupWizard()
 
  void MainWindow::closeEvent(QCloseEvent *event)
  {
-   //TODO: restore later
-//   if (m_trayIcon->isVisible()) {
-//     hide();
-//     event->ignore();
-//   }
-   if (m_backupThread->isRunning()) {
-     // TODO do something nicer!
-     m_backupThread->terminate();
+   if (m_trayIcon->isVisible()) {
+     hide();
+     event->ignore();
+   } else {
+     if (m_backupThread->isRunning()) {
+      if (KMessageBox::questionYesNo(this, i18n("A backup is in progress, are you sure you want to quit kaveau?!"), i18n("WARNING - backup running")) ==   KMessageBox::Yes)
+        m_backupThread->terminate();
+      else
+        event->ignore();
+     }
    }
  }
 
