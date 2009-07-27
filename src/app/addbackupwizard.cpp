@@ -27,6 +27,7 @@
 
 #include <KIconLoader>
 #include <KLocale>
+#include <KUser>
 #include <QtGui/QPushButton>
 
 AddBackupWizard::AddBackupWizard(QWidget *parent):
@@ -62,8 +63,8 @@ void AddBackupWizard::slotFinishClicked()
 
 Backup* AddBackupWizard::backup()
 {
-  //TODO FIX!
-  QString source = "/home/flavio/logs";
+  KUser user;
+  QString source = user.homeDir();
   QString destination = page3->destination();
   QString deviceUDI = page3->deviceUDI();
   QStringList excludedDirs = page2->excludedDirs();

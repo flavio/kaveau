@@ -23,7 +23,7 @@
       </sizepolicy>
      </property>
      <property name="text">
-      <string>Select the files/directories you want to exclude. You can use * (wildcard) generic character.</string>
+      <string>Select the files/directories you want to exclude from the backup.</string>
      </property>
      <property name="textFormat">
       <enum>Qt::PlainText</enum>

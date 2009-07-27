@@ -18,6 +18,8 @@
  * Boston, MA 02110-1301, USA.
  */
 
+#include <kuser.h>
+
 #include "addbackupwizardpage2.h"
 
 #include "ui_addbackupwizardpage2view.h"
@@ -25,6 +27,7 @@
 AddBackupWizardPage2::AddBackupWizardPage2(QWidget* parent)
   : QWizardPage (parent)
 {
+  KUser user;
   QWidget *widget = new QWidget(this);
   m_view = new Ui::AddBackupWizardPage2View();
   m_view->setupUi(widget);
@@ -34,6 +37,7 @@ AddBackupWizardPage2::AddBackupWizardPage2(QWidget* parent)
   setLayout(layout);
 
   m_view->excludeURL->setMode(KFile::Directory | KFile::ExistingOnly);
+  m_view->excludeURL->setPath(user.homeDir());
 
   setupConnections();
 }

@@ -47,7 +47,6 @@ class AddBackupWizardPage2 : public QWizardPage
     void sloExcludedItemsSelectionChanged();
 
   private:
-    void populateDeviceView();
     void setupConnections();
 
     Ui::AddBackupWizardPage2View* m_view;
