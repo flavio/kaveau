@@ -146,8 +146,11 @@ void MainWindow::updateBackupView()
   ConfigManager* backupManager = ConfigManager::global();
   Backup* backup = backupManager->backup();
 
-  if (backup == 0)
+  if (backup == 0) {
+    m_mainWidget->stackedWidget->setCurrentIndex(CONFIGURE_PAGE);
+    m_mainWidget->btnBackup->setEnabled(false);
     return;
+  }
 
   m_mainWidget->labelSource->setText( backup->source());
   m_mainWidget->labelDest->setText( backup->dest());
@@ -172,10 +175,13 @@ void MainWindow::updateBackupView()
     m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-low", KIconLoader::Small));
   }
 
-  if (m_backupDiskPlugged)
+  if (m_backupDiskPlugged) {
     m_mainWidget->labelDevice->setText (i18n("Connected"));
-  else
+    m_mainWidget->btnBackup->setEnabled(true);
+  } else {
     m_mainWidget->labelDevice->setText (i18n("Not connected"));
+    m_mainWidget->btnBackup->setEnabled(false);
+  }
 }
 
 void MainWindow::slotStartBackup() {
