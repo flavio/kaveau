@@ -18,29 +18,24 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef ADDBACKUPDIALOG_H
-#define ADDBACKUPDIALOG_H
+#ifndef EXCLUDEDITEMSDIALOG_H
+#define EXCLUDEDITEMSDIALOG_H
 
 #include <KDialog>
 
 namespace Ui {
-  class AddBackupWidget;
+  class ExcludedItemsView;
 }
 
-class Backup;
-
-class AddBackupDialog : public KDialog
+class ExcludedItemsDialog : public KDialog
 {
   Q_OBJECT
 
   public:
-    AddBackupDialog(Backup* backup = 0, QWidget* parent = 0);
-    ~AddBackupDialog();
+    ExcludedItemsDialog(const QStringList& excludedItems, QWidget* parent = 0);
+    ~ExcludedItemsDialog();
 
-    Backup* backup();
-
-  public slots:
-    void accept();
+    QStringList excludedItems() const;
 
   private slots:
     void slotBtnExcludeClicked();
@@ -50,10 +45,8 @@ class AddBackupDialog : public KDialog
 
   private:
     void setupConnections();
-    void loadBackupSettings();
 
-    Ui::AddBackupWidget* m_backupWidget;
-    Backup* m_backup;
+    Ui::ExcludedItemsView* m_view;
 };
 
-#endif // ADDBACKUPDIALOG_H
+#endif // EXCLUDEDITEMSDIALOG_H

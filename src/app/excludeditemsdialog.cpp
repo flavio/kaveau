@@ -18,121 +18,92 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#include "addbackupdialog.h"
+#include "excludeditemsdialog.h"
 
-#include "ui_addbackupwidget.h"
+#include "ui_excludeditemsview.h"
 
 #include <KLocale>
 #include <KMessageBox>
+#include <KUser>
 
-#include "backup.h"
-
-AddBackupDialog::AddBackupDialog (Backup* backup, QWidget *parent)
+ExcludedItemsDialog::ExcludedItemsDialog (const QStringList& items, QWidget *parent)
   : KDialog(parent)
 {
+  KUser user;
+
   setCaption(i18n("Add backup"));
   setButtons(KDialog::Cancel | KDialog::Ok);
   setDefaultButton(KDialog::Ok);
   setModal(true);
 
   QWidget* widget = new QWidget( this );
-  m_backupWidget = new Ui::AddBackupWidget();
-  m_backupWidget->setupUi(widget);
+  m_view = new Ui::ExcludedItemsView();
+  m_view->setupUi(widget);
   setMainWidget( widget );
 
-  m_backupWidget->sourceURL->setMode(KFile::Directory | KFile::ExistingOnly);
-  m_backupWidget->destURL->setMode(KFile::Directory);
-  m_backupWidget->excludeURL->setMode(KFile::Directory | KFile::ExistingOnly);
-
-  m_backup = backup;
-  loadBackupSettings();
+  m_view->excludeURL->setMode(KFile::Directory | KFile::ExistingOnly);
+  m_view->excludeURL->setPath(user.homeDir());
+  m_view->excludedItems->addItems(items);
 
   setupConnections();
 }
 
-AddBackupDialog::~AddBackupDialog()
+ExcludedItemsDialog::~ExcludedItemsDialog()
 {
-  delete m_backupWidget;
+  delete m_view;
 }
 
-void AddBackupDialog::setupConnections()
+void ExcludedItemsDialog::setupConnections()
 {
-  connect (m_backupWidget->btnExclude, SIGNAL(clicked()), this, SLOT(slotBtnExcludeClicked()));
-  connect (m_backupWidget->btnRemove, SIGNAL(clicked()), this, SLOT(slotBtnRemoveClicked()));
+  connect (m_view->btnExclude, SIGNAL(clicked()), this, SLOT(slotBtnExcludeClicked()));
+  connect (m_view->btnRemove, SIGNAL(clicked()), this, SLOT(slotBtnRemoveClicked()));
 
-  connect (m_backupWidget->excludeURL, SIGNAL(textChanged(QString)), this, SLOT(slotExcludeChanged()));
-  connect (m_backupWidget->excludeURL, SIGNAL(urlSelected(KUrl)), this, SLOT(slotExcludeChanged()));
+  connect (m_view->excludeURL, SIGNAL(textChanged(QString)), this, SLOT(slotExcludeChanged()));
+  connect (m_view->excludeURL, SIGNAL(urlSelected(KUrl)), this, SLOT(slotExcludeChanged()));
 
-  connect (m_backupWidget->excludedItems, SIGNAL( itemSelectionChanged()), this, SLOT(sloExcludedItemsSelectionChanged()));
+  connect (m_view->excludedItems, SIGNAL( itemSelectionChanged()), this, SLOT(sloExcludedItemsSelectionChanged()));
 }
 
-void AddBackupDialog::loadBackupSettings()
+void ExcludedItemsDialog::slotBtnExcludeClicked()
 {
-  if (m_backup == 0)
-    return;
+  QString item = m_view->excludeURL->text();
 
-  m_backupWidget->sourceURL->setUrl(m_backup->source());
-  m_backupWidget->destURL->setUrl(m_backup->dest());
-  m_backupWidget->excludedItems->addItems(m_backup->excludeList());
+  if (m_view->excludedItems->findItems(item, Qt::MatchExactly).isEmpty())
+    m_view->excludedItems->addItem(item);
+
+  m_view->btnExclude->setEnabled(false);
+  m_view->excludeURL->clear();
 }
 
-
-void AddBackupDialog::slotBtnExcludeClicked()
+void ExcludedItemsDialog::slotBtnRemoveClicked()
 {
-  QString item = m_backupWidget->excludeURL->text();
-
-  if (m_backupWidget->excludedItems->findItems(item, Qt::MatchExactly).isEmpty())
-    m_backupWidget->excludedItems->addItem(item);
-
-  m_backupWidget->btnExclude->setEnabled(false);
-  m_backupWidget->excludeURL->clear();
-}
-
-void AddBackupDialog::slotBtnRemoveClicked()
-{
-  QList<QListWidgetItem *> selectedItems = m_backupWidget->excludedItems->selectedItems ();
+  QList<QListWidgetItem *> selectedItems = m_view->excludedItems->selectedItems ();
 
   foreach (QListWidgetItem* item, selectedItems) {
-    m_backupWidget->excludedItems->takeItem (m_backupWidget->excludedItems->row(item));
+    m_view->excludedItems->takeItem (m_view->excludedItems->row(item));
   }
 
-  m_backupWidget->btnRemove->setEnabled(false);
+  m_view->btnRemove->setEnabled(false);
 }
 
 
-void AddBackupDialog::accept()
+
+QStringList ExcludedItemsDialog::excludedItems() const
 {
-  if ((m_backupWidget->sourceURL->text().isEmpty()) || (m_backupWidget->destURL->text().isEmpty())) {
-    KMessageBox::error(this, i18n("Error"), i18n("You have to select both source and destination directories!"));
-  } else {
-    if (m_backup == 0)
-      m_backup = new Backup();
-
-    m_backup->setSource(m_backupWidget->sourceURL->text());
-    m_backup->setDest(m_backupWidget->destURL->text());
-
-    QStringList items;
-    for (int i = 0; i < m_backupWidget->excludedItems->count(); i++)
-      items << m_backupWidget->excludedItems->item(i)->data(Qt::DisplayRole).toString();
-    m_backup->setExcludeList(items);
-
-    KDialog::accept();
-  }
+  QStringList items;
+  for (int i = 0; i < m_view->excludedItems->count(); i++)
+    items << m_view->excludedItems->item(i)->data(Qt::DisplayRole).toString();
+  return items;
 }
 
-Backup* AddBackupDialog::backup()
+void ExcludedItemsDialog::slotExcludeChanged()
 {
-  return m_backup;
+  m_view->btnExclude->setEnabled(!m_view->excludeURL->text().isEmpty());
 }
 
-void AddBackupDialog::slotExcludeChanged()
+void ExcludedItemsDialog::sloExcludedItemsSelectionChanged()
 {
-  m_backupWidget->btnExclude->setEnabled(!m_backupWidget->excludeURL->text().isEmpty());
-}
-
-void AddBackupDialog::sloExcludedItemsSelectionChanged()
-{
-  QList<QListWidgetItem *> selectedItems = m_backupWidget->excludedItems->selectedItems ();
-  m_backupWidget->btnRemove->setEnabled(!selectedItems.isEmpty());
+  QList<QListWidgetItem *> selectedItems = m_view->excludedItems->selectedItems ();
+  m_view->btnRemove->setEnabled(!selectedItems.isEmpty());
 }
 
