@@ -62,6 +62,8 @@ class MainWindow : public KXmlGuiWindow
   private slots:
     void slotStartBackupWizard();
     void slotStartBackup();
+    void slotShowLog();
+    void slotEditFilters();
     void slotBackupFinished(bool, QString);
     void slotDeviceAdded(QString);
     void slotDeviceRemoved(QString);
@@ -72,6 +74,7 @@ class MainWindow : public KXmlGuiWindow
     KSystemTrayIcon* m_trayIcon;
     BackupThread* m_backupThread;
     bool m_backupDiskPlugged;
+    QString m_lastError;
 };
 
 #endif

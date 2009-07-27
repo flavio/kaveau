@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>442</width>
+    <width>443</width>
     <height>284</height>
    </rect>
   </property>
@@ -260,7 +260,7 @@
                  <number>0</number>
                 </property>
                 <property name="value">
-                 <number>160037</number>
+                 <number>161056</number>
                 </property>
                </widget>
               </item>
@@ -453,6 +453,13 @@
         </size>
        </property>
       </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnFilter">
+       <property name="text">
+        <string>Filter</string>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QPushButton" name="btnBackup">

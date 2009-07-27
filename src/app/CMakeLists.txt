@@ -7,20 +7,22 @@ include_directories( ../utils
 set(kaveau_app_SRC
     main.cpp
     mainwindow.cpp
-    addbackupdialog.cpp
+    excludeditemsdialog.cpp
     addbackupwizard.cpp
     addbackupwizardpage1.cpp
     addbackupwizardpage2.cpp
     addbackupwizardpage3.cpp
+    logdialog.cpp
 )
 
 kde4_add_ui_files(
   kaveau_app_SRC
   mainwidgetbase.ui
-  addbackupwidget.ui
+  excludeditemsview.ui
   addbackupwizardpage1view.ui
   addbackupwizardpage2view.ui
   addbackupwizardpage3view.ui
+  logview.ui
 )
 
 kde4_add_executable(kaveau ${kaveau_app_SRC})

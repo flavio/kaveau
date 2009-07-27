@@ -42,8 +42,9 @@
 #include <solid/storageaccess.h>
 
 #include "ui_mainwidgetbase.h"
-#include "addbackupdialog.h"
+#include "excludeditemsdialog.h"
 #include "addbackupwizard.h"
+#include "logdialog.h"
 #include "backup.h"
 #include "configmanager.h"
 #include "rdiffmanager.h"
@@ -110,6 +111,9 @@ void MainWindow::setupConnections()
 {
   connect (m_mainWidget->btnConfig, SIGNAL(clicked()), this, SLOT(slotStartBackupWizard()));
   connect (m_mainWidget->btnBackup, SIGNAL(clicked()), this, SLOT(slotStartBackup()));
+  connect (m_mainWidget->btnFilter, SIGNAL(clicked()), this, SLOT(slotEditFilters()));
+  connect (m_mainWidget->btnDetails, SIGNAL(clicked()), this, SLOT(slotShowLog()));
+
 
   Solid::DeviceNotifier* notifier = Solid::DeviceNotifier::instance();
   connect (notifier, SIGNAL(deviceAdded(QString)), this, SLOT(slotDeviceAdded(QString)));
@@ -121,8 +125,20 @@ void MainWindow::slotStartBackupWizard()
   AddBackupWizard wizard(this);
   wizard.exec();
   if (wizard.completed()) {
-     ConfigManager::global()->setBackup(wizard.backup());
+    ConfigManager::global()->setBackup(wizard.backup());
+    m_backupDiskPlugged = true;
     updateBackupView();
+    backupIfNeeded();
+  }
+}
+
+void MainWindow::slotEditFilters()
+{
+  Backup* backup = ConfigManager::global()->backup();
+  ExcludedItemsDialog dialog(backup->excludeList(), this);
+  if (dialog.exec() == QDialog::Accepted) {
+    QStringList excludedItems = dialog.excludedItems();
+    backup->setExcludeList(excludedItems);
   }
 }
 
@@ -149,11 +165,14 @@ void MainWindow::updateBackupView()
   if (backup == 0) {
     m_mainWidget->stackedWidget->setCurrentIndex(CONFIGURE_PAGE);
     m_mainWidget->btnBackup->setEnabled(false);
+    m_mainWidget->btnFilter->setEnabled(false);
     return;
   }
 
   m_mainWidget->labelSource->setText( backup->source());
   m_mainWidget->labelDest->setText( backup->dest());
+  m_mainWidget->btnFilter->setEnabled(true);
+
   KIconLoader* iconLoader = KIconLoader::global();
 
   if (backup->lastBackupTime().isValid()) {
@@ -182,6 +201,12 @@ void MainWindow::updateBackupView()
     m_mainWidget->labelDevice->setText (i18n("Not connected"));
     m_mainWidget->btnBackup->setEnabled(false);
   }
+}
+
+void MainWindow::slotShowLog()
+{
+  LogDialog* dialog = new LogDialog(m_lastError, this);
+  dialog->show();
 }
 
 void MainWindow::slotStartBackup() {
@@ -221,6 +246,7 @@ void MainWindow::slotBackupFinished(bool status, QString message)
   }
   else {
     kDebug() << "error during backup:" << message;
+    m_lastError = message;
 
     m_mainWidget->stackedWidget->setCurrentIndex(FAILURE_PAGE);
 
