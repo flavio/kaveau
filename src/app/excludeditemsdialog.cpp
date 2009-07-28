@@ -83,7 +83,7 @@ void ExcludedItemsDialog::slotBtnRemoveClicked()
     m_view->excludedItems->takeItem (m_view->excludedItems->row(item));
   }
 
-  m_view->btnRemove->setEnabled(false);
+  m_view->btnRemove->setEnabled(!m_view->excludedItems->selectedItems().isEmpty());
 }
 
 
