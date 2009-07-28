@@ -275,6 +275,7 @@ void MainWindow::slotDeviceAdded(QString udi)
     m_mainWidget->labelDevice->setText (i18n ("Connected"));
     m_backupDiskPlugged = true;
     mountBackupPartition();
+    updateBackupView();
   } else if ((backup == 0)  && (device.isDeviceInterface(Solid::DeviceInterface::StorageDrive))) {
 
     Solid::StorageDrive* drive = (Solid::StorageDrive*) device.asDeviceInterface(Solid::DeviceInterface::StorageDrive);
