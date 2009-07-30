@@ -43,6 +43,7 @@
 #include <solid/storageaccess.h>
 
 #include "ui_mainwidgetbase.h"
+#include "common.h"
 #include "excludeditemsdialog.h"
 #include "addbackupwizard.h"
 #include "logdialog.h"
@@ -88,6 +89,7 @@ MainWindow::MainWindow(QWidget *parent)
     mountBackupPartition();
 
   updateBackupView();
+  updateDiskUsage("");
 }
 
 MainWindow::~MainWindow()
@@ -203,24 +205,6 @@ void MainWindow::updateBackupView()
     m_mainWidget->btnBackup->setEnabled(false);
   }
 }
-
-const QString bytesToHuman(KIO::filesize_t bytes)
-{
-  QString size;
-
-  if(bytes >= 1024ul*1024ul*1024ul*1024ul) {
-    size = i18nc("units", "%1 TiB").arg(bytes / (1024ul*1024ul*1024ul*1024)); // the unit - terabytes
-  } else if(bytes >= 1024ul*1024ul*1024ul) {
-    size = i18nc("units", "%1 GiB").arg(bytes / (1024ul*1024ul*1024)); // the unit - gigabytes
-  } else if(bytes > 1024ul*1024ul) {
-    size = i18nc("units", "%1 MiB").arg(bytes / (1024ul*1024ul)); // the unit - megabytes
-  } else {
-    size = i18nc("units", "%1 KiB").arg(bytes / 1024ul); // the unit - kilobytes
-  }
-
-  return size;
-}
-
 
 void MainWindow::updateDiskUsage(const QString& mount)
 {

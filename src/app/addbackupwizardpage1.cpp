@@ -21,7 +21,9 @@
 #include "addbackupwizardpage1.h"
 
 #include "ui_addbackupwizardpage1view.h"
+#include "common.h"
 
+#include <kdiskfreespaceinfo.h>
 #include <QtCore/QList>
 #include <QtGui/QTreeWidgetItem>
 
@@ -61,11 +63,6 @@ void AddBackupWizardPage1::slotRefresh() {
   populateDeviceView();
 }
 
-QString bytesToHuman(qlonglong value)
-{
-
-}
-
 void AddBackupWizardPage1::populateDeviceView()
 {
   m_view->devicesWidget->clear();
@@ -87,9 +84,7 @@ void AddBackupWizardPage1::populateDeviceView()
         else
           columns << storage->label();
 
-        QString size;
-        size.setNum(storage->size());
-        columns << size;
+        columns << bytesToHuman(storage->size());
 
         // this column is not displayed
         columns << volumeDevice.udi();

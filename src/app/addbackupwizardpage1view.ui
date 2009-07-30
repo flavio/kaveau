@@ -43,7 +43,7 @@
      </column>
      <column>
       <property name="text">
-       <string>Size (Bytes)</string>
+       <string>Size</string>
       </property>
      </column>
     </widget>

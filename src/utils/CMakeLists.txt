@@ -4,6 +4,7 @@ INCLUDE_DIRECTORIES(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES}
 
 set(kaveau_utils_SRC
     backup.cpp
+    common.cpp
     configmanager.cpp
     rdifflistener.cpp
     rdiffmanager.cpp
