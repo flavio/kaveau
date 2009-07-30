@@ -75,6 +75,13 @@
      </item>
     </layout>
    </item>
+   <item>
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>It's strongly recommended to avoid file systems like vfat or ntfs. Please consider using ext3.</string>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <resources/>

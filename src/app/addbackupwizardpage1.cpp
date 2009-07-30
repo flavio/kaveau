@@ -80,7 +80,7 @@ void AddBackupWizardPage1::populateDeviceView()
         QStringList columns;
         columns << QString() << storage->fsType();
         if (storage->label().isEmpty())
-          columns << i18n("Volume");
+          columns << i18n("Undefined");
         else
           columns << storage->label();
 
@@ -89,7 +89,14 @@ void AddBackupWizardPage1::populateDeviceView()
         // this column is not displayed
         columns << volumeDevice.udi();
 
-        items.append(new QTreeWidgetItem(deviceItem, columns));
+        QTreeWidgetItem* item = new QTreeWidgetItem(deviceItem, columns);
+
+        if ((storage->fsType() == "vfat") || (storage->fsType() == "ntfs"))
+          item->setIcon(1,KIcon("security-low"));
+        else if (storage->fsType().startsWith("ext"))
+          item->setIcon(1,KIcon("security-high"));
+
+        items.append(item);
       }
     }
   }
