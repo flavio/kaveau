@@ -218,8 +218,6 @@ void MainWindow::updateDiskUsage(const QString& mount)
     m_mainWidget->diskSpaceBar->setMaximum(freeSpaceInfo.size());
     m_mainWidget->diskSpaceBar->setValue(freeSpaceInfo.used());
     m_mainWidget->diskSpaceBar->show();
-qDebug() << "used" << freeSpaceInfo.used();
-qDebug() << "size" << freeSpaceInfo.size();
     m_mainWidget->diskSpaceLabel->setText(i18n("%1 over %2").arg(bytesToHuman(freeSpaceInfo.used())).arg(bytesToHuman(freeSpaceInfo.size())));
     m_mainWidget->diskSpaceLabel->show();
   }
