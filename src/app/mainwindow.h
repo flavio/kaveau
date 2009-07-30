@@ -50,6 +50,7 @@ class MainWindow : public KXmlGuiWindow
     void setupTrayIcon();
 
     void updateBackupView();
+    void updateDiskUsage(const QString&);
     void showGenericError(const QString& message, bool disableBackup = true);
 
     bool isBackupDiskPlugged();
@@ -75,6 +76,7 @@ class MainWindow : public KXmlGuiWindow
     BackupThread* m_backupThread;
     bool m_backupDiskPlugged;
     QString m_lastError;
+    QString m_mount;
 };
 
 #endif

@@ -29,6 +29,7 @@
 #include <knotification.h>
 #include <kstandardaction.h>
 #include <ksystemtrayicon.h>
+#include <kdiskfreespaceinfo.h>
 #include <QtGui/QCloseEvent>
 #include <QtCore/QFileInfo>
 #include <QtCore/QTimer>
@@ -203,6 +204,43 @@ void MainWindow::updateBackupView()
   }
 }
 
+const QString bytesToHuman(KIO::filesize_t bytes)
+{
+  QString size;
+
+  if(bytes >= 1024ul*1024ul*1024ul*1024ul) {
+    size = i18nc("units", "%1 TiB").arg(bytes / (1024ul*1024ul*1024ul*1024)); // the unit - terabytes
+  } else if(bytes >= 1024ul*1024ul*1024ul) {
+    size = i18nc("units", "%1 GiB").arg(bytes / (1024ul*1024ul*1024)); // the unit - gigabytes
+  } else if(bytes > 1024ul*1024ul) {
+    size = i18nc("units", "%1 MiB").arg(bytes / (1024ul*1024ul)); // the unit - megabytes
+  } else {
+    size = i18nc("units", "%1 KiB").arg(bytes / 1024ul); // the unit - kilobytes
+  }
+
+  return size;
+}
+
+
+void MainWindow::updateDiskUsage(const QString& mount)
+{
+  KDiskFreeSpaceInfo freeSpaceInfo = KDiskFreeSpaceInfo::freeSpaceInfo(mount);
+
+  if (!freeSpaceInfo.isValid()) {
+    m_mainWidget->diskSpaceBar->hide();
+    m_mainWidget->diskSpaceLabel->hide();
+  } else {
+    m_mainWidget->diskSpaceBar->setMinimum(0);
+    m_mainWidget->diskSpaceBar->setMaximum(freeSpaceInfo.size());
+    m_mainWidget->diskSpaceBar->setValue(freeSpaceInfo.used());
+    m_mainWidget->diskSpaceBar->show();
+qDebug() << "used" << freeSpaceInfo.used();
+qDebug() << "size" << freeSpaceInfo.size();
+    m_mainWidget->diskSpaceLabel->setText(i18n("%1 over %2").arg(bytesToHuman(freeSpaceInfo.used())).arg(bytesToHuman(freeSpaceInfo.size())));
+    m_mainWidget->diskSpaceLabel->show();
+  }
+}
+
 void MainWindow::slotShowLog()
 {
   LogDialog* dialog = new LogDialog(m_lastError, this);
@@ -260,6 +298,7 @@ void MainWindow::slotBackupFinished(bool status, QString message)
   // schedule next backup
   scheduleNextBackup( BACKUP_INTERVAL );
   updateBackupView();
+  updateDiskUsage(m_mount);
 }
 
 void MainWindow::slotDeviceAdded(QString udi)
@@ -345,6 +384,7 @@ bool MainWindow::isBackupDiskPlugged()
 
 void MainWindow::mountBackupPartition()
 {
+  m_mount = "";
   Solid::Device device (ConfigManager::global()->backup()->diskUdi());
   Solid::StorageAccess* storageAccess = (Solid::StorageAccess*) device.asDeviceInterface(Solid::DeviceInterface::StorageAccess);
 
@@ -366,6 +406,7 @@ void MainWindow::slotBackupPartitionMounted(Solid::ErrorType error,QVariant mess
     Solid::StorageAccess* storageAccess = (Solid::StorageAccess*) device.asDeviceInterface(Solid::DeviceInterface::StorageAccess);
 
     QFileInfo info (storageAccess->filePath());
+    m_mount = storageAccess->filePath();
 
     if (info.isWritable()) {
       backupIfNeeded();
@@ -375,7 +416,10 @@ void MainWindow::slotBackupPartitionMounted(Solid::ErrorType error,QVariant mess
   }
   else {
     showGenericError(i18n("unable to mount backup partition"));
+    m_mount = "";
   }
+
+  updateDiskUsage(m_mount);
 }
 
 bool MainWindow::isRdiffAvailable()
