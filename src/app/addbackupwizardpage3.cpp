@@ -22,16 +22,21 @@
 
 #include "ui_addbackupwizardpage3view.h"
 
+#include <kuser.h>
+
 //solid specific includes
 #include <solid/device.h>
 #include <solid/deviceinterface.h>
 #include <solid/storageaccess.h>
 
+#include <QtCore/QDir>
 #include <QtCore/QFileInfo>
+#include <QtNetwork/QHostInfo>
 
 #define MOUNTING_PAGE 0
-#define MOUNTED_PAGE 1
+#define CHOICE_PAGE 1
 #define ERROR_PAGE 2
+#define INFO_PAGE 3
 
 AddBackupWizardPage3::AddBackupWizardPage3(QWidget* parent)
   : QWizardPage (parent)
@@ -44,8 +49,10 @@ AddBackupWizardPage3::AddBackupWizardPage3(QWidget* parent)
   layout->addWidget(widget);
   setLayout(layout);
 
-  m_view->destURL->setMode(KFile::Directory | KFile::ExistingOnly);
   m_view->labelIcon->setPixmap(KIconLoader::global()->loadIcon("dialog-error", KIconLoader::Desktop));
+
+  // just for being sure
+  m_view->btnErase->setChecked(false);
 
   setupConnections();
 }
@@ -57,23 +64,40 @@ AddBackupWizardPage3::~AddBackupWizardPage3()
 
 void AddBackupWizardPage3::initializePage()
 {
+  m_destination.clear();
   checkDeviceStatus();
 }
 
 void AddBackupWizardPage3::setupConnections()
 {
-  connect (m_view->destURL, SIGNAL(textChanged(QString)), this, SLOT(slotDestChanged()));
-  connect (m_view->destURL, SIGNAL(urlSelected(KUrl)), this, SLOT(slotDestChanged()));
+  connect(m_view->btnGroup, SIGNAL(changed(int)), this, SLOT(slotBtnClicked()));
 }
 
-void AddBackupWizardPage3::slotDestChanged()
+void AddBackupWizardPage3::slotBtnClicked()
 {
   emit completeChanged();
 }
 
 bool AddBackupWizardPage3::isComplete () const
 {
-  return !m_view->destURL->url().isEmpty();
+  if (m_view->stackedWidget->currentIndex() == CHOICE_PAGE)
+    return (m_view->btnErase->isChecked()  || m_view->btnKeep->isChecked());
+  else
+    return true;
+}
+
+void AddBackupWizardPage3::calculateDestination(const QString& mount)
+{
+  KUser user;
+
+  m_destination = mount;
+  m_destination += QDir::separator();
+  m_destination += "kaveau";
+  m_destination += QDir::separator();
+  m_destination += QHostInfo::localHostName();
+  m_destination += QDir::separator();
+  m_destination += user.loginName();
+  m_destination = QDir::cleanPath(m_destination);
 }
 
 void AddBackupWizardPage3::slotSetupDone(Solid::ErrorType error,QVariant message,QString udi)
@@ -85,8 +109,8 @@ void AddBackupWizardPage3::slotSetupDone(Solid::ErrorType error,QVariant message
     QFileInfo info (storageAccess->filePath());
 
     if (info.isWritable()) {
-      m_view->stackedWidget->setCurrentIndex(MOUNTED_PAGE);
-      m_view->destURL->setPath(storageAccess->filePath());
+      calculateDestination(storageAccess->filePath());
+      verifyDestination();
     } else {
       m_view->stackedWidget->setCurrentIndex(ERROR_PAGE);
       m_view->labelMessage->setText(i18n("%1 is not writable").arg(storageAccess->filePath()));
@@ -96,6 +120,18 @@ void AddBackupWizardPage3::slotSetupDone(Solid::ErrorType error,QVariant message
     m_view->stackedWidget->setCurrentIndex(ERROR_PAGE);
     m_view->labelMessage->setText(message.toString());
     m_view->labelIcon->setPixmap(KIconLoader::global()->loadIcon("security-low", KIconLoader::Small));
+  }
+}
+
+void AddBackupWizardPage3::verifyDestination()
+{
+  QDir destDir (m_destination);
+  if (destDir.exists())
+    m_view->stackedWidget->setCurrentIndex(CHOICE_PAGE);
+  else {
+    m_view->stackedWidget->setCurrentIndex(INFO_PAGE);
+    m_view->labelInfo->setText(m_destination);
+    emit completeChanged();
   }
 }
 
@@ -118,8 +154,8 @@ void AddBackupWizardPage3::checkDeviceStatus()
       QFileInfo info (storageAccess->filePath());
 
       if (info.isWritable()) {
-        m_view->stackedWidget->setCurrentIndex(MOUNTED_PAGE);
-        m_view->destURL->setPath(storageAccess->filePath());
+        calculateDestination(storageAccess->filePath());
+        verifyDestination();
       } else {
         m_view->stackedWidget->setCurrentIndex(ERROR_PAGE);
         m_view->labelMessage->setText(i18n("%1 is not writable").arg(storageAccess->filePath()));
@@ -138,10 +174,15 @@ void AddBackupWizardPage3::checkDeviceStatus()
 
 QString AddBackupWizardPage3::destination() const
 {
-  return m_view->destURL->text();
+  return m_destination;
 }
 
 QString AddBackupWizardPage3::deviceUDI() const
 {
   return field("deviceUDI").toString();
+}
+
+bool AddBackupWizardPage3::eraseDestination() const
+{
+  return m_view->btnErase->isChecked();
 }

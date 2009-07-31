@@ -41,19 +41,23 @@ class AddBackupWizardPage3 : public QWizardPage
     void initializePage();
     QString destination() const;
     QString deviceUDI() const;
+    bool eraseDestination() const;
 
   signals:
     void completeChanged();
 
   private slots:
-    void slotDestChanged();
+    void slotBtnClicked();
     void slotSetupDone(Solid::ErrorType,QVariant,QString);
 
   private:
+    void calculateDestination(const QString& mount);
     void setupConnections();
     void checkDeviceStatus();
+    void verifyDestination();
 
     Ui::AddBackupWizardPage3View* m_view;
+    QString m_destination;
 };
 
 #endif // ADDBACKUPWIZARDPAGE3_H
