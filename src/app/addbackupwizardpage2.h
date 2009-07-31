@@ -23,6 +23,8 @@
 
 #include <QtGui/QWizardPage>
 
+#include <solid/solidnamespace.h>
+
 namespace Ui {
   class AddBackupWizardPage2View;
 }
@@ -35,21 +37,27 @@ class AddBackupWizardPage2 : public QWizardPage
     AddBackupWizardPage2(QWidget* parent = 0);
     virtual ~AddBackupWizardPage2();
 
-    QStringList excludedDirs();
+    bool isComplete () const;
+    void initializePage();
+    QString destination() const;
+    QString deviceUDI() const;
+    bool eraseDestination() const;
 
   signals:
     void completeChanged();
 
   private slots:
-    void slotBtnExcludeClicked();
-    void slotBtnRemoveClicked();
-    void slotExcludeChanged();
-    void sloExcludedItemsSelectionChanged();
+    void slotBtnClicked();
+    void slotSetupDone(Solid::ErrorType,QVariant,QString);
 
   private:
+    void calculateDestination(const QString& mount);
     void setupConnections();
+    void checkDeviceStatus();
+    void verifyDestination();
 
     Ui::AddBackupWizardPage2View* m_view;
+    QString m_destination;
 };
 
 #endif // ADDBACKUPWIZARDPAGE2_H

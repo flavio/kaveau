@@ -18,29 +18,16 @@
  * Boston, MA 02110-1301, USA.
  */
 
+#include <kuser.h>
+
 #include "addbackupwizardpage3.h"
 
 #include "ui_addbackupwizardpage3view.h"
 
-#include <kuser.h>
-
-//solid specific includes
-#include <solid/device.h>
-#include <solid/deviceinterface.h>
-#include <solid/storageaccess.h>
-
-#include <QtCore/QDir>
-#include <QtCore/QFileInfo>
-#include <QtNetwork/QHostInfo>
-
-#define MOUNTING_PAGE 0
-#define CHOICE_PAGE 1
-#define ERROR_PAGE 2
-#define INFO_PAGE 3
-
 AddBackupWizardPage3::AddBackupWizardPage3(QWidget* parent)
   : QWizardPage (parent)
 {
+  KUser user;
   QWidget *widget = new QWidget(this);
   m_view = new Ui::AddBackupWizardPage3View();
   m_view->setupUi(widget);
@@ -49,10 +36,8 @@ AddBackupWizardPage3::AddBackupWizardPage3(QWidget* parent)
   layout->addWidget(widget);
   setLayout(layout);
 
-  m_view->labelIcon->setPixmap(KIconLoader::global()->loadIcon("dialog-error", KIconLoader::Desktop));
-
-  // just for being sure
-  m_view->btnErase->setChecked(false);
+  m_view->excludeURL->setMode(KFile::Directory | KFile::ExistingOnly);
+  m_view->excludeURL->setPath(user.homeDir());
 
   setupConnections();
 }
@@ -62,127 +47,58 @@ AddBackupWizardPage3::~AddBackupWizardPage3()
   delete m_view;
 }
 
-void AddBackupWizardPage3::initializePage()
-{
-  m_destination.clear();
-  checkDeviceStatus();
-}
-
 void AddBackupWizardPage3::setupConnections()
 {
-  connect(m_view->btnGroup, SIGNAL(changed(int)), this, SLOT(slotBtnClicked()));
+  connect (m_view->btnExclude, SIGNAL(clicked()), this, SLOT(slotBtnExcludeClicked()));
+  connect (m_view->btnRemove, SIGNAL(clicked()), this, SLOT(slotBtnRemoveClicked()));
+
+  connect (m_view->excludeURL, SIGNAL(textChanged(QString)), this, SLOT(slotExcludeChanged()));
+  connect (m_view->excludeURL, SIGNAL(urlSelected(KUrl)), this, SLOT(slotExcludeChanged()));
+
+  connect (m_view->excludedItems, SIGNAL( itemSelectionChanged()), this, SLOT(sloExcludedItemsSelectionChanged()));
 }
 
-void AddBackupWizardPage3::slotBtnClicked()
+void AddBackupWizardPage3::slotBtnExcludeClicked()
 {
-  emit completeChanged();
+  QString item = m_view->excludeURL->text();
+
+  if (m_view->excludedItems->findItems(item, Qt::MatchExactly).isEmpty())
+    m_view->excludedItems->addItem(item);
+
+  m_view->btnExclude->setEnabled(false);
+  m_view->excludeURL->clear();
 }
 
-bool AddBackupWizardPage3::isComplete () const
+void AddBackupWizardPage3::slotBtnRemoveClicked()
 {
-  if (m_view->stackedWidget->currentIndex() == CHOICE_PAGE)
-    return (m_view->btnErase->isChecked()  || m_view->btnKeep->isChecked());
-  else
-    return true;
-}
+  QList<QListWidgetItem *> selectedItems = m_view->excludedItems->selectedItems ();
 
-void AddBackupWizardPage3::calculateDestination(const QString& mount)
-{
-  KUser user;
-
-  m_destination = mount;
-  m_destination += QDir::separator();
-  m_destination += "kaveau";
-  m_destination += QDir::separator();
-  m_destination += QHostInfo::localHostName();
-  m_destination += QDir::separator();
-  m_destination += user.loginName();
-  m_destination = QDir::cleanPath(m_destination);
-}
-
-void AddBackupWizardPage3::slotSetupDone(Solid::ErrorType error,QVariant message,QString udi)
-{
-  if (error == Solid::NoError) {
-    Solid::Device device (udi);
-    Solid::StorageAccess* storageAccess = (Solid::StorageAccess*) device.asDeviceInterface(Solid::DeviceInterface::StorageAccess);
-
-    QFileInfo info (storageAccess->filePath());
-
-    if (info.isWritable()) {
-      calculateDestination(storageAccess->filePath());
-      verifyDestination();
-    } else {
-      m_view->stackedWidget->setCurrentIndex(ERROR_PAGE);
-      m_view->labelMessage->setText(i18n("%1 is not writable").arg(storageAccess->filePath()));
-    }
+  foreach (QListWidgetItem* item, selectedItems) {
+    m_view->excludedItems->takeItem (m_view->excludedItems->row(item));
   }
-  else {
-    m_view->stackedWidget->setCurrentIndex(ERROR_PAGE);
-    m_view->labelMessage->setText(message.toString());
-    m_view->labelIcon->setPixmap(KIconLoader::global()->loadIcon("security-low", KIconLoader::Small));
+
+  m_view->btnRemove->setEnabled(!m_view->excludedItems->selectedItems().isEmpty());
+}
+
+void AddBackupWizardPage3::slotExcludeChanged()
+{
+  m_view->btnExclude->setEnabled(!m_view->excludeURL->text().isEmpty());
+}
+
+void AddBackupWizardPage3::sloExcludedItemsSelectionChanged()
+{
+  QList<QListWidgetItem *> selectedItems = m_view->excludedItems->selectedItems ();
+  m_view->btnRemove->setEnabled(!selectedItems.isEmpty());
+}
+
+QStringList AddBackupWizardPage3::excludedDirs()
+{
+  QStringList items;
+  for (int i = 0; i < m_view->excludedItems->count(); i++) {
+    QListWidgetItem* item = m_view->excludedItems->item(i);
+    items << item->data(Qt::DisplayRole).toString();
   }
+
+  return items;
 }
 
-void AddBackupWizardPage3::verifyDestination()
-{
-  QDir destDir (m_destination);
-  if (destDir.exists())
-    m_view->stackedWidget->setCurrentIndex(CHOICE_PAGE);
-  else {
-    m_view->stackedWidget->setCurrentIndex(INFO_PAGE);
-    m_view->labelInfo->setText(m_destination);
-    emit completeChanged();
-  }
-}
-
-void AddBackupWizardPage3::checkDeviceStatus()
-{
-  QString deviceUDI = field("deviceUDI").toString();
-
-  Solid::Device device (deviceUDI);
-
-  Solid::StorageAccess* storageAccess = (Solid::StorageAccess*) device.asDeviceInterface(Solid::DeviceInterface::StorageAccess);
-
-  if (!device.isValid()) {
-    m_view->stackedWidget->setCurrentIndex(ERROR_PAGE);
-    if (deviceUDI.isEmpty())
-      m_view->labelMessage->setText(i18n("Something went wrong during the wizard!"));
-    else
-      m_view->labelMessage->setText(i18n("%1 is not a valid storage device!").arg(deviceUDI));
-  } else {
-    if (storageAccess->isAccessible()) {
-      QFileInfo info (storageAccess->filePath());
-
-      if (info.isWritable()) {
-        calculateDestination(storageAccess->filePath());
-        verifyDestination();
-      } else {
-        m_view->stackedWidget->setCurrentIndex(ERROR_PAGE);
-        m_view->labelMessage->setText(i18n("%1 is not writable").arg(storageAccess->filePath()));
-      }
-    } else {
-      m_view->stackedWidget->setCurrentIndex(MOUNTING_PAGE);
-      connect (storageAccess, SIGNAL(setupDone(Solid::ErrorType,QVariant,QString)), this, SLOT (slotSetupDone(Solid::ErrorType,QVariant,QString)));
-      if (!storageAccess->setup()) {
-        // mount operation is not permitted
-        m_view->stackedWidget->setCurrentIndex(ERROR_PAGE);
-        m_view->labelMessage->setText(i18n("Mount operation not permitted"));
-      }
-    }
-  }
-}
-
-QString AddBackupWizardPage3::destination() const
-{
-  return m_destination;
-}
-
-QString AddBackupWizardPage3::deviceUDI() const
-{
-  return field("deviceUDI").toString();
-}
-
-bool AddBackupWizardPage3::eraseDestination() const
-{
-  return m_view->btnErase->isChecked();
-}
