@@ -24,13 +24,16 @@
 #include <kaction.h>
 #include <klocale.h>
 #include <kactioncollection.h>
+#include <kdiskfreespaceinfo.h>
 #include <kiconloader.h>
+#include <kio/deletejob.h>
 #include <kmessagebox.h>
 #include <knotification.h>
 #include <kstandardaction.h>
 #include <ksystemtrayicon.h>
-#include <kdiskfreespaceinfo.h>
+
 #include <QtGui/QCloseEvent>
+#include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 #include <QtCore/QTimer>
 
@@ -128,10 +131,20 @@ void MainWindow::slotStartBackupWizard()
   AddBackupWizard wizard(this);
   wizard.exec();
   if (wizard.completed()) {
-    ConfigManager::global()->setBackup(wizard.backup());
+    Backup* backup = wizard.backup();
+    ConfigManager::global()->setBackup(backup);
     m_backupDiskPlugged = true;
     updateBackupView();
-    backupIfNeeded();
+
+    if (wizard.deleteDestination()) {
+      kDebug() << "Going to erase" << backup->dest();
+      m_mainWidget->btnBackup->setEnabled(false);
+      KIO::DeleteJob* deleteJob =  KIO::del(backup->dest());
+      connect (deleteJob, SIGNAL (finished(KJob*)), this, SLOT (slotDeleteDestinationDone()));
+    } else {
+      m_mainWidget->btnBackup->setEnabled(false);
+      createBackupDirectory();
+    }
   }
 }
 
@@ -142,6 +155,25 @@ void MainWindow::slotEditFilters()
   if (dialog.exec() == QDialog::Accepted) {
     QStringList excludedItems = dialog.excludedItems();
     backup->setExcludeList(excludedItems);
+  }
+}
+
+void MainWindow::slotDeleteDestinationDone()
+{
+  kDebug() << ConfigManager::global()->backup()->dest() << "deleted";
+  createBackupDirectory();
+}
+
+void MainWindow::createBackupDirectory()
+{
+  Backup* backup = ConfigManager::global()->backup();
+  QDir dir;
+  if (dir.mkpath(backup->dest())) {
+    kDebug() << backup->dest() << "created";
+    backupIfNeeded();
+    m_mainWidget->btnBackup->setEnabled(true);
+  } else {
+    showGenericError(i18n("Unable to create backup directory"), true);
   }
 }
 

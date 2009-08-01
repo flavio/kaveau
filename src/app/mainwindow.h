@@ -54,6 +54,7 @@ class MainWindow : public KXmlGuiWindow
     void showGenericError(const QString& message, bool disableBackup = true);
 
     bool isBackupDiskPlugged();
+    void createBackupDirectory();
     void mountBackupPartition();
     bool isRdiffAvailable();
 
@@ -69,6 +70,7 @@ class MainWindow : public KXmlGuiWindow
     void slotDeviceAdded(QString);
     void slotDeviceRemoved(QString);
     void slotBackupPartitionMounted(Solid::ErrorType error,QVariant message,QString udi);
+    void slotDeleteDestinationDone();
 
   private:
     Ui::MainWidgetBase* m_mainWidget;
