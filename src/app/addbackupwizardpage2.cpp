@@ -21,7 +21,9 @@
 #include "addbackupwizardpage2.h"
 
 #include "ui_addbackupwizardpage2view.h"
+#include "common.h"
 
+#include <kdiskfreespaceinfo.h>
 #include <kuser.h>
 
 //solid specific includes
@@ -131,6 +133,11 @@ void AddBackupWizardPage2::verifyDestination()
   else {
     m_view->stackedWidget->setCurrentIndex(INFO_PAGE);
     m_view->labelInfo->setText(m_destination);
+
+    KDiskFreeSpaceInfo info = KDiskFreeSpaceInfo::freeSpaceInfo(m_destination);
+    m_view->labelDiskSpace->setText(QString("%1 / %2").arg(bytesToHuman(info.used())).arg(bytesToHuman(info.size())));
+    m_view->diskSpaceBar->setMaximum(info.size());
+    m_view->diskSpaceBar->setValue(info.used());
     emit completeChanged();
   }
 }

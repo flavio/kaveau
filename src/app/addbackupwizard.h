@@ -39,6 +39,7 @@ class AddBackupWizard: public QWizard
     bool completed() const { return m_completed; }
 
     Backup* backup();
+    bool deleteDest() const;
 
   private:
     void initView();

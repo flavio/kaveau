@@ -73,3 +73,9 @@ Backup* AddBackupWizard::backup()
 
   return backup;
 }
+
+bool AddBackupWizard::deleteDest() const
+{
+  return page2->eraseDestination();
+}
+
