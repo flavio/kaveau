@@ -19,19 +19,19 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifndef _RDIFFLISTENER_H_
-#define _RDIFFLISTENER_H_
+#ifndef _PROCESSLISTENER_H_
+#define _PROCESSLISTENER_H_
 
 #include <QtCore/QStringList>
 #include <QtCore/QObject>
 
 class KProcess;
 
-class RdiffListener: public QObject
+class ProcessListener: public QObject
 {
   Q_OBJECT
   public:
-    RdiffListener(KProcess*);
+    ProcessListener(KProcess*);
 
     QStringList stdOut();
     QStringList stdErr();

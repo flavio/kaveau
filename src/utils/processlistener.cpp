@@ -19,11 +19,12 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#include "rdifflistener.h"
+#include "processlistener.h"
 
-#include <KProcess>
+#include <kdebug.h>
+#include <kprocess.h>
 
-RdiffListener::RdiffListener(KProcess* proc)
+ProcessListener::ProcessListener(KProcess* proc)
   : QObject(),
     m_proc(proc)
 {
@@ -31,40 +32,42 @@ RdiffListener::RdiffListener(KProcess* proc)
   connect(m_proc,SIGNAL(readyReadStandardError()), this, SLOT(slot_readyReadStandardError()));
 }
 
-void RdiffListener::slot_readyReadStandardOutput()
+void ProcessListener::slot_readyReadStandardOutput()
 {
   m_proc->setReadChannel(QProcess::StandardOutput);
   QByteArray output;
   while(!(output = m_proc->readLine()).isEmpty()) {
+    kDebug() << output;
     m_stdOut.append(output);
   }
 }
 
-void RdiffListener::slot_readyReadStandardError()
+void ProcessListener::slot_readyReadStandardError()
 {
   m_proc->setReadChannel(QProcess::StandardError);
   QByteArray error;
   while(!(error = m_proc->readLine()).isEmpty()) {
+    kDebug() << "error:" << error;
     m_stdErr.append(error);
   }
 }
 
-QString RdiffListener::errorMessage()
+QString ProcessListener::errorMessage()
 {
   return m_stdErr.join("").simplified();
 }
 
-QStringList RdiffListener::stdErr()
+QStringList ProcessListener::stdErr()
 {
   return m_stdErr;
 }
 
-QStringList RdiffListener::stdOut()
+QStringList ProcessListener::stdOut()
 {
   return m_stdOut;
 }
 
-bool RdiffListener::isOk()
+bool ProcessListener::isOk()
 {
   return !m_stdErr.isEmpty();
 }
