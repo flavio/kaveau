@@ -52,7 +52,7 @@
 #include "logdialog.h"
 #include "backup.h"
 #include "configmanager.h"
-#include "rdiffmanager.h"
+#include "backupmanager.h"
 #include "backupthread.h"
 
 #include <KDebug>
@@ -438,8 +438,7 @@ void MainWindow::slotBackupPartitionMounted(Solid::ErrorType error,QVariant mess
 
 bool MainWindow::isRdiffAvailable()
 {
-  RdiffManager manager;
-  return manager.isRdiffAvailable();
+  return BackupManager::isBackupProgramAvailable();
 }
 
 void MainWindow::showGenericError(const QString& message, bool disableBackup)

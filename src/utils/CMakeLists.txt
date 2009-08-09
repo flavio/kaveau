@@ -6,9 +6,10 @@ set(kaveau_utils_SRC
     backup.cpp
     common.cpp
     configmanager.cpp
-    rdifflistener.cpp
-    rdiffmanager.cpp
+    processlistener.cpp
+    #rdiffmanager.cpp
     backupthread.cpp
+    backupmanager.cpp
 )
 
 KDE4_ADD_LIBRARY(kaveau_utils STATIC ${kaveau_utils_SRC})

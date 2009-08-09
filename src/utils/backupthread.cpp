@@ -19,12 +19,19 @@
  */
 
 #include "backupthread.h"
-#include "rdiffmanager.h"
+#include "backupmanager.h"
 #include "configmanager.h"
 
 void BackupThread::run()
 {
-  RdiffManager manager;
-  bool ok = manager.doBackup(ConfigManager::global()->backup());
-  emit backupFinished(ok, manager.errorString());
+  m_manager = new BackupManager (ConfigManager::global()->backup());
+  connect ( m_manager, SIGNAL (backupDone(bool,QString)), this, SLOT (backupDone(bool,QString)));
+
+  m_manager->doBackup();
+}
+
+void BackupThread::backupDone(bool ok, QString error)
+{
+  emit backupFinished(ok, error);
+  delete m_manager;
 }
