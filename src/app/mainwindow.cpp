@@ -24,12 +24,16 @@
 #include <kaction.h>
 #include <klocale.h>
 #include <kactioncollection.h>
+#include <kdiskfreespaceinfo.h>
 #include <kiconloader.h>
+#include <kio/deletejob.h>
 #include <kmessagebox.h>
 #include <knotification.h>
 #include <kstandardaction.h>
 #include <ksystemtrayicon.h>
+
 #include <QtGui/QCloseEvent>
+#include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 #include <QtCore/QTimer>
 
@@ -42,6 +46,7 @@
 #include <solid/storageaccess.h>
 
 #include "ui_mainwidgetbase.h"
+#include "common.h"
 #include "excludeditemsdialog.h"
 #include "addbackupwizard.h"
 #include "logdialog.h"
@@ -87,6 +92,7 @@ MainWindow::MainWindow(QWidget *parent)
     mountBackupPartition();
 
   updateBackupView();
+  updateDiskUsage("");
 }
 
 MainWindow::~MainWindow()
@@ -125,10 +131,20 @@ void MainWindow::slotStartBackupWizard()
   AddBackupWizard wizard(this);
   wizard.exec();
   if (wizard.completed()) {
-    ConfigManager::global()->setBackup(wizard.backup());
+    Backup* backup = wizard.backup();
+    ConfigManager::global()->setBackup(backup);
     m_backupDiskPlugged = true;
     updateBackupView();
-    backupIfNeeded();
+
+    if (wizard.deleteDestination()) {
+      kDebug() << "Going to erase" << backup->dest();
+      m_mainWidget->btnBackup->setEnabled(false);
+      KIO::DeleteJob* deleteJob =  KIO::del(backup->dest());
+      connect (deleteJob, SIGNAL (finished(KJob*)), this, SLOT (slotDeleteDestinationDone()));
+    } else {
+      m_mainWidget->btnBackup->setEnabled(false);
+      createBackupDirectory();
+    }
   }
 }
 
@@ -139,6 +155,25 @@ void MainWindow::slotEditFilters()
   if (dialog.exec() == QDialog::Accepted) {
     QStringList excludedItems = dialog.excludedItems();
     backup->setExcludeList(excludedItems);
+  }
+}
+
+void MainWindow::slotDeleteDestinationDone()
+{
+  kDebug() << ConfigManager::global()->backup()->dest() << "deleted";
+  createBackupDirectory();
+}
+
+void MainWindow::createBackupDirectory()
+{
+  Backup* backup = ConfigManager::global()->backup();
+  QDir dir;
+  if (dir.mkpath(backup->dest())) {
+    kDebug() << backup->dest() << "created";
+    backupIfNeeded();
+    m_mainWidget->btnBackup->setEnabled(true);
+  } else {
+    showGenericError(i18n("Unable to create backup directory"), true);
   }
 }
 
@@ -203,6 +238,23 @@ void MainWindow::updateBackupView()
   }
 }
 
+void MainWindow::updateDiskUsage(const QString& mount)
+{
+  KDiskFreeSpaceInfo freeSpaceInfo = KDiskFreeSpaceInfo::freeSpaceInfo(mount);
+
+  if (!freeSpaceInfo.isValid()) {
+    m_mainWidget->diskSpaceBar->hide();
+    m_mainWidget->diskSpaceLabel->hide();
+  } else {
+    m_mainWidget->diskSpaceBar->setMinimum(0);
+    m_mainWidget->diskSpaceBar->setMaximum(freeSpaceInfo.size());
+    m_mainWidget->diskSpaceBar->setValue(freeSpaceInfo.used());
+    m_mainWidget->diskSpaceBar->show();
+    m_mainWidget->diskSpaceLabel->setText(i18n("%1 over %2").arg(bytesToHuman(freeSpaceInfo.used())).arg(bytesToHuman(freeSpaceInfo.size())));
+    m_mainWidget->diskSpaceLabel->show();
+  }
+}
+
 void MainWindow::slotShowLog()
 {
   LogDialog* dialog = new LogDialog(m_lastError, this);
@@ -260,6 +312,7 @@ void MainWindow::slotBackupFinished(bool status, QString message)
   // schedule next backup
   scheduleNextBackup( BACKUP_INTERVAL );
   updateBackupView();
+  updateDiskUsage(m_mount);
 }
 
 void MainWindow::slotDeviceAdded(QString udi)
@@ -345,6 +398,7 @@ bool MainWindow::isBackupDiskPlugged()
 
 void MainWindow::mountBackupPartition()
 {
+  m_mount = "";
   Solid::Device device (ConfigManager::global()->backup()->diskUdi());
   Solid::StorageAccess* storageAccess = (Solid::StorageAccess*) device.asDeviceInterface(Solid::DeviceInterface::StorageAccess);
 
@@ -366,6 +420,7 @@ void MainWindow::slotBackupPartitionMounted(Solid::ErrorType error,QVariant mess
     Solid::StorageAccess* storageAccess = (Solid::StorageAccess*) device.asDeviceInterface(Solid::DeviceInterface::StorageAccess);
 
     QFileInfo info (storageAccess->filePath());
+    m_mount = storageAccess->filePath();
 
     if (info.isWritable()) {
       backupIfNeeded();
@@ -375,7 +430,10 @@ void MainWindow::slotBackupPartitionMounted(Solid::ErrorType error,QVariant mess
   }
   else {
     showGenericError(i18n("unable to mount backup partition"));
+    m_mount = "";
   }
+
+  updateDiskUsage(m_mount);
 }
 
 bool MainWindow::isRdiffAvailable()

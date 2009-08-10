@@ -23,8 +23,6 @@
 
 #include <QtGui/QWizardPage>
 
-#include <solid/solidnamespace.h>
-
 namespace Ui {
   class AddBackupWizardPage3View;
 }
@@ -37,21 +35,19 @@ class AddBackupWizardPage3 : public QWizardPage
     AddBackupWizardPage3(QWidget* parent = 0);
     virtual ~AddBackupWizardPage3();
 
-    bool isComplete () const;
-    void initializePage();
-    QString destination() const;
-    QString deviceUDI() const;
+    QStringList excludedDirs();
 
   signals:
     void completeChanged();
 
   private slots:
-    void slotDestChanged();
-    void slotSetupDone(Solid::ErrorType,QVariant,QString);
+    void slotBtnExcludeClicked();
+    void slotBtnRemoveClicked();
+    void slotExcludeChanged();
+    void sloExcludedItemsSelectionChanged();
 
   private:
     void setupConnections();
-    void checkDeviceStatus();
 
     Ui::AddBackupWizardPage3View* m_view;
 };

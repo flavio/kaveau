@@ -43,7 +43,7 @@
      </column>
      <column>
       <property name="text">
-       <string>Size (Bytes)</string>
+       <string>Size</string>
       </property>
      </column>
     </widget>
@@ -74,6 +74,13 @@
       </widget>
      </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>It's strongly recommended to avoid file systems like vfat or ntfs. Please consider using ext3.</string>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

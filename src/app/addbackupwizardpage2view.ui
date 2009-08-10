@@ -6,109 +6,306 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>606</width>
-    <height>468</height>
+    <width>609</width>
+    <height>294</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
-    <widget class="QLabel" name="qLabel1">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
+    <widget class="QStackedWidget" name="stackedWidget">
+     <property name="currentIndex">
+      <number>3</number>
      </property>
-     <property name="text">
-      <string>Select the files/directories you want to exclude from the backup.</string>
-     </property>
-     <property name="textFormat">
-      <enum>Qt::PlainText</enum>
-     </property>
-     <property name="wordWrap">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="KUrlRequester" name="excludeURL">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="KPushButton" name="btnExclude">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Exclude</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="_5">
-     <item>
-      <widget class="QListWidget" name="excludedItems"/>
-     </item>
-     <item>
-      <layout class="QVBoxLayout" name="_6">
+     <widget class="QWidget" name="page">
+      <layout class="QVBoxLayout" name="verticalLayout_4">
        <item>
-        <widget class="KPushButton" name="btnRemove">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>Remove</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer>
+        <spacer name="verticalSpacer_2">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Expanding</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
            <width>20</width>
-           <height>121</height>
+           <height>110</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Mounting device</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QProgressBar" name="progressBar">
+         <property name="minimum">
+          <number>0</number>
+         </property>
+         <property name="maximum">
+          <number>0</number>
+         </property>
+         <property name="value">
+          <number>251111</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>110</height>
           </size>
          </property>
         </spacer>
        </item>
       </layout>
-     </item>
-    </layout>
+     </widget>
+     <widget class="QWidget" name="page_2">
+      <layout class="QVBoxLayout" name="verticalLayout_5">
+       <item>
+        <widget class="QLabel" name="qLabel13_2">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>An old backup directory has been found:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="KButtonGroup" name="btnGroup">
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <item>
+           <widget class="QRadioButton" name="btnErase">
+            <property name="text">
+             <string>erase contents</string>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="btnKeep">
+            <property name="text">
+             <string>keep contents</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>225</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>Erase contents unless the directory contains a previous backup made with kaveau.</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="page_3">
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <widget class="QLabel" name="labelIcon">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>64</width>
+             <height>64</height>
+            </size>
+           </property>
+           <property name="baseSize">
+            <size>
+             <width>64</width>
+             <height>64</height>
+            </size>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_3">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>16</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Error</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QLabel" name="labelMessage">
+         <property name="layoutDirection">
+          <enum>Qt::LeftToRight</enum>
+         </property>
+         <property name="text">
+          <string>explaination</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignJustify|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="page_4">
+      <layout class="QVBoxLayout" name="verticalLayout_6">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QLabel" name="label_4">
+           <property name="text">
+            <string>Backups will be stored under:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="labelInfo">
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QLabel" name="label_5">
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Disk space:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QProgressBar" name="diskSpaceBar">
+           <property name="value">
+            <number>24</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="labelDiskSpace">
+           <property name="text">
+            <string>TextLabel</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_4">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>255</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+    </widget>
    </item>
   </layout>
  </widget>
  <customwidgets>
   <customwidget>
-   <class>KPushButton</class>
-   <extends>QPushButton</extends>
-   <header>kpushbutton.h</header>
-  </customwidget>
-  <customwidget>
-   <class>KUrlRequester</class>
-   <extends>QFrame</extends>
-   <header>kurlrequester.h</header>
+   <class>KButtonGroup</class>
+   <extends>QGroupBox</extends>
+   <header>kbuttongroup.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

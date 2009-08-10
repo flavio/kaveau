@@ -65,11 +65,17 @@ Backup* AddBackupWizard::backup()
 {
   KUser user;
   QString source = user.homeDir();
-  QString destination = page3->destination();
-  QString deviceUDI = page3->deviceUDI();
-  QStringList excludedDirs = page2->excludedDirs();
+  QString destination = page2->destination();
+  QString deviceUDI = page2->deviceUDI();
+  QStringList excludedDirs = page3->excludedDirs();
 
   Backup* backup = new Backup(source,deviceUDI, destination,excludedDirs);
 
   return backup;
 }
+
+bool AddBackupWizard::deleteDestination() const
+{
+  return page2->eraseDestination();
+}
+

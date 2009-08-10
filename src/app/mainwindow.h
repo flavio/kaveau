@@ -50,9 +50,11 @@ class MainWindow : public KXmlGuiWindow
     void setupTrayIcon();
 
     void updateBackupView();
+    void updateDiskUsage(const QString&);
     void showGenericError(const QString& message, bool disableBackup = true);
 
     bool isBackupDiskPlugged();
+    void createBackupDirectory();
     void mountBackupPartition();
     bool isRdiffAvailable();
 
@@ -68,6 +70,7 @@ class MainWindow : public KXmlGuiWindow
     void slotDeviceAdded(QString);
     void slotDeviceRemoved(QString);
     void slotBackupPartitionMounted(Solid::ErrorType error,QVariant message,QString udi);
+    void slotDeleteDestinationDone();
 
   private:
     Ui::MainWidgetBase* m_mainWidget;
@@ -75,6 +78,7 @@ class MainWindow : public KXmlGuiWindow
     BackupThread* m_backupThread;
     bool m_backupDiskPlugged;
     QString m_lastError;
+    QString m_mount;
 };
 
 #endif

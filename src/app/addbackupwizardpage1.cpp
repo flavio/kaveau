@@ -21,7 +21,9 @@
 #include "addbackupwizardpage1.h"
 
 #include "ui_addbackupwizardpage1view.h"
+#include "common.h"
 
+#include <kdiskfreespaceinfo.h>
 #include <QtCore/QList>
 #include <QtGui/QTreeWidgetItem>
 
@@ -61,11 +63,6 @@ void AddBackupWizardPage1::slotRefresh() {
   populateDeviceView();
 }
 
-QString bytesToHuman(qlonglong value)
-{
-
-}
-
 void AddBackupWizardPage1::populateDeviceView()
 {
   m_view->devicesWidget->clear();
@@ -83,18 +80,23 @@ void AddBackupWizardPage1::populateDeviceView()
         QStringList columns;
         columns << QString() << storage->fsType();
         if (storage->label().isEmpty())
-          columns << i18n("Volume");
+          columns << i18n("Undefined");
         else
           columns << storage->label();
 
-        QString size;
-        size.setNum(storage->size());
-        columns << size;
+        columns << bytesToHuman(storage->size());
 
         // this column is not displayed
         columns << volumeDevice.udi();
 
-        items.append(new QTreeWidgetItem(deviceItem, columns));
+        QTreeWidgetItem* item = new QTreeWidgetItem(deviceItem, columns);
+
+        if ((storage->fsType() == "vfat") || (storage->fsType() == "ntfs"))
+          item->setIcon(1,KIcon("security-low"));
+        else if (storage->fsType().startsWith("ext"))
+          item->setIcon(1,KIcon("security-high"));
+
+        items.append(item);
       }
     }
   }
