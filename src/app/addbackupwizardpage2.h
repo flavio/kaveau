@@ -40,6 +40,7 @@ class AddBackupWizardPage2 : public QWizardPage
     bool isComplete () const;
     void initializePage();
     QString destination() const;
+    QString relativeDestination() const;
     QString deviceUDI() const;
     bool eraseDestination() const;
 
@@ -51,13 +52,14 @@ class AddBackupWizardPage2 : public QWizardPage
     void slotSetupDone(Solid::ErrorType,QVariant,QString);
 
   private:
-    void calculateDestination(const QString& mount);
     void setupConnections();
     void checkDeviceStatus();
     void verifyDestination();
 
     Ui::AddBackupWizardPage2View* m_view;
     QString m_destination;
+    QString m_mount;
+    QString m_relative;
 };
 
 #endif // ADDBACKUPWIZARDPAGE2_H

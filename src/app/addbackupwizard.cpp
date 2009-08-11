@@ -66,10 +66,12 @@ Backup* AddBackupWizard::backup()
   KUser user;
   QString source = user.homeDir();
   QString destination = page2->destination();
+  QString relativeDest = page2->relativeDestination();
   QString deviceUDI = page2->deviceUDI();
   QStringList excludedDirs = page3->excludedDirs();
 
-  Backup* backup = new Backup(source,deviceUDI, destination,excludedDirs);
+  Backup* backup = new Backup(source, deviceUDI, relativeDest, excludedDirs);
+  backup->setDest( destination);
 
   return backup;
 }

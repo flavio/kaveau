@@ -21,11 +21,12 @@
 
 #include "configmanager.h"
 
-#include <KConfig>
-#include <KConfigGroup>
-#include <KGlobal>
+#include <kconfig.h>
+#include <kconfiggroup.h>
+#include <kglobal.h>
 
 #include "backup.h"
+#include "common.h"
 
 K_GLOBAL_STATIC (ConfigManager, globalConfigManager)
 
@@ -71,12 +72,16 @@ void ConfigManager::loadConfigFile()
   for ( QStringList::Iterator it = backupNameList.begin(); it != backupNameList.end(); ++it ) {
     KConfigGroup group = m_config->group(*it);
     QString source = group.readEntry("Source");
-    QString dest = group.readEntry("Dest");
+    QString relativeDest;
+    if (group.hasKey("RelativeDest"))
+      relativeDest = group.readEntry("RelativeDest");
+    else
+      relativeDest = calculateRelativeBackupPath();
     QString diskUdi = group.readEntry("DiskUdi");
     QStringList excludeList = group.readEntry("ExcludeList", QStringList());
     QDateTime lastBackupTime = group.readEntry("LastBackupTime", QDateTime());
 
-    setBackup(new Backup(source, diskUdi, dest, excludeList, lastBackupTime));
+    setBackup(new Backup(source, diskUdi, relativeDest, excludeList, lastBackupTime));
   }
 }
 
@@ -98,7 +103,7 @@ void ConfigManager::saveConfigFile()
   if (m_backup) {
     KConfigGroup configGroup = m_config->group("Backup");
     configGroup.writeEntry( "Source", m_backup->source());
-    configGroup.writeEntry( "Dest", m_backup->dest());
+    configGroup.writeEntry( "RelativeDest", m_backup->relativeDest());
     configGroup.writeEntry( "DiskUdi", m_backup->diskUdi());
     configGroup.writeEntry( "ExcludeList", m_backup->excludeList());
     configGroup.writeEntry( "LastBackupTime", m_backup->lastBackupTime());

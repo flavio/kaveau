@@ -1,6 +1,10 @@
 #include "common.h"
 
 #include <klocale.h>
+#include <kuser.h>
+
+#include <QtCore/QDir>
+#include <QtNetwork/QHostInfo>
 
 const QString bytesToHuman(qulonglong bytes)
 {
@@ -17,5 +21,28 @@ const QString bytesToHuman(qulonglong bytes)
   }
 
   return size;
+}
+
+const QString calculateRelativeBackupPath()
+{
+  KUser user;
+
+  QString path = "kaveau";
+  path += QDir::separator();
+  path += QHostInfo::localHostName();
+  path += QDir::separator();
+  path += user.loginName();
+
+  return path;
+}
+
+const QString calculateBackupDestination(const QString& mount)
+{
+  return calculateBackupDestination(mount, calculateRelativeBackupPath());
+}
+
+const QString calculateBackupDestination(const QString& mount, const QString& relative)
+{
+  return QDir::cleanPath( mount + QDir::separator() + relative);
 }
 

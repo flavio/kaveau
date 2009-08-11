@@ -1,21 +1,21 @@
-/* This file is part of the kaveau project
+/* This file is part of kaveau
  *
  * Copyright (C) 2009 Flavio Castelli <flavio@castelli.name>
  *
- * kaveau is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
  *
- * kaveau is distributed in the hope that it will be useful,
+ * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with Keep; if not, write to the
- * Free Software Foundation, Inc.,
- * 51 Franklin Steet, Fifth Floor, Boston, MA 02110-1301, USA.
+ * You should have received a copy of the GNU Library General Public License
+ * along with kaveau; see the file COPYING.LIB.  If not, write to
+ * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #include "addbackupwizardpage2.h"
@@ -24,7 +24,6 @@
 #include "common.h"
 
 #include <kdiskfreespaceinfo.h>
-#include <kuser.h>
 
 //solid specific includes
 #include <solid/device.h>
@@ -33,7 +32,6 @@
 
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
-#include <QtNetwork/QHostInfo>
 
 #define MOUNTING_PAGE 0
 #define CHOICE_PAGE 1
@@ -88,20 +86,6 @@ bool AddBackupWizardPage2::isComplete () const
     return true;
 }
 
-void AddBackupWizardPage2::calculateDestination(const QString& mount)
-{
-  KUser user;
-
-  m_destination = mount;
-  m_destination += QDir::separator();
-  m_destination += "kaveau";
-  m_destination += QDir::separator();
-  m_destination += QHostInfo::localHostName();
-  m_destination += QDir::separator();
-  m_destination += user.loginName();
-  m_destination = QDir::cleanPath(m_destination);
-}
-
 void AddBackupWizardPage2::slotSetupDone(Solid::ErrorType error,QVariant message,QString udi)
 {
   if (error == Solid::NoError) {
@@ -111,7 +95,8 @@ void AddBackupWizardPage2::slotSetupDone(Solid::ErrorType error,QVariant message
     QFileInfo info (storageAccess->filePath());
 
     if (info.isWritable()) {
-      calculateDestination(storageAccess->filePath());
+      m_mount = storageAccess->filePath();
+      m_destination = calculateBackupDestination(m_mount);
       verifyDestination();
     } else {
       m_view->stackedWidget->setCurrentIndex(ERROR_PAGE);
@@ -161,7 +146,8 @@ void AddBackupWizardPage2::checkDeviceStatus()
       QFileInfo info (storageAccess->filePath());
 
       if (info.isWritable()) {
-        calculateDestination(storageAccess->filePath());
+        m_mount = storageAccess->filePath();
+        m_destination = calculateBackupDestination(m_mount);
         verifyDestination();
       } else {
         m_view->stackedWidget->setCurrentIndex(ERROR_PAGE);
@@ -182,6 +168,11 @@ void AddBackupWizardPage2::checkDeviceStatus()
 QString AddBackupWizardPage2::destination() const
 {
   return m_destination;
+}
+
+QString AddBackupWizardPage2::relativeDestination() const
+{
+  return m_relative;
 }
 
 QString AddBackupWizardPage2::deviceUDI() const
