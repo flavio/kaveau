@@ -28,29 +28,39 @@
 class Backup
 {
   public:
-    Backup( QString source, QString diskUdi, QString dest,
+    Backup( QString source, QString diskUdi, QString relativeDest,
             QStringList excludeList,
             QDateTime lastBackupTime = QDateTime());
     Backup();
     ~Backup();
 
     QString source() const;
-    void setSource(QString source);
+    void setSource(const QString& source);
 
     QString diskUdi() const;
-    void setDiskUdi(QString uid);
+    void setDiskUdi(const QString& uid);
 
     QString dest() const;
-    void setDest(QString dest);
+    void setDest(const QString& dest);
+
+    QString mount() const;
+    void setMount(const QString& mount);
+
+    QString relativeDest() const;
+    void setRelativeDest(const QString& relativeDest);
 
     QStringList excludeList() const;
-    void setExcludeList(QStringList& excludeList);
+    void setExcludeList(const QStringList& excludeList);
 
     QDateTime lastBackupTime() const;
     void setLastBackupTime(const QDateTime&);
 
   private:
+    void updateDest();
+
     QString m_source;
+    QString m_mount;
+    QString m_relativeDest;
     QString m_dest;
     QString m_diskUdi;
     QStringList m_excludeList;

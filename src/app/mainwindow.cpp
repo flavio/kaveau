@@ -325,15 +325,17 @@ void MainWindow::slotDeviceAdded(QString udi)
     return;
 
   if ((backup != 0) && (backup->diskUdi().compare(udi, Qt::CaseSensitive) == 0)) {
+    // backup disk has been connected
     m_mainWidget->labelDevice->setText (i18n ("Connected"));
     m_backupDiskPlugged = true;
     mountBackupPartition();
     updateBackupView();
   } else if ((backup == 0)  && (device.isDeviceInterface(Solid::DeviceInterface::StorageDrive))) {
-
+    // we don't have a backup disk, maybe we can use this one
     Solid::StorageDrive* drive = (Solid::StorageDrive*) device.asDeviceInterface(Solid::DeviceInterface::StorageDrive);
 
     if ((drive->driveType() == Solid::StorageDrive::HardDisk) && ((drive->bus() == Solid::StorageDrive::Usb) || (drive->bus() == Solid::StorageDrive::Ieee1394))) {
+      // this device can be used for backups, let's ask to the user what he wants to do
       KNotification *notify = new KNotification( "storageDeviceAttached", parentWidget() );
       notify->setText( QString( "An external storage device has been attached." ) );
       notify->setActions( i18n( "Use it with kaveau" ).split( ',' ) );
@@ -421,6 +423,9 @@ void MainWindow::slotBackupPartitionMounted(Solid::ErrorType error,QVariant mess
 
     QFileInfo info (storageAccess->filePath());
     m_mount = storageAccess->filePath();
+
+    // update backup dest
+    ConfigManager::global()->backup()->setMount(m_mount);
 
     if (info.isWritable()) {
       backupIfNeeded();
