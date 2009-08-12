@@ -262,16 +262,12 @@ void MainWindow::slotShowLog()
 }
 
 void MainWindow::slotStartBackup() {
-  if (!m_backupDiskPlugged)
+  if ((!m_backupDiskPlugged) || (m_backupThread->isRunning()))
     return;
-
-  if (m_backupThread->isRunning()) {
-    QTimer::singleShot( BACKUP_INTERVAL*1000, this, SLOT( slotStartBackup()));
-    return;
-  }
 
   m_mainWidget->stackedWidget->setCurrentIndex(DOING_BACKUP_PAGE);
   m_mainWidget->labelNextBackup->setText("-");
+  m_mainWidget->btnBackup->setEnabled(false);
 
   m_backupThread->start();
 
@@ -281,11 +277,11 @@ void MainWindow::slotStartBackup() {
   notification->sendEvent();
 }
 
-void MainWindow::slotBackupFinished(bool status, QString message)
+void MainWindow::slotBackupFinished(bool ok, QString message)
 {
   KNotification* notification;
 
-  if (status) {
+  if (ok) {
     kDebug() << "backup completed successfully";
     m_mainWidget->stackedWidget->setCurrentIndex(SUCCESS_PAGE);
 
