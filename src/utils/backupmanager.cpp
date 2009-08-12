@@ -24,13 +24,14 @@
 #include "processlistener.h"
 
 #include <kdebug.h>
-#include <kio/deletejob.h>
+#include <kio/netaccess.h>
 #include <klocale.h>
 #include <kprocess.h>
 #include <kshell.h>
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
+#include <QtCore/QFileInfo>
 
 BackupManager::BackupManager(Backup* backup, QObject* parent)
     : QObject(parent),
@@ -38,13 +39,14 @@ BackupManager::BackupManager(Backup* backup, QObject* parent)
 {
 }
 
-void BackupManager::doBackup()
+bool BackupManager::doBackup()
 {
-  m_backupTimestamp = QDateTime::currentDateTime().toString("yyyy-MM-ddThh:mm:ss");
+  QString backupTimestamp = QDateTime::currentDateTime().toString("yyyy-MM-ddThh:mm:ss");
   bool updateCurrent = false;
+  m_error.clear();
 
   QString current = QFile::encodeName(KShell::quoteArg(QDir::cleanPath(m_backup->dest() + QDir::separator() + "current")));
-  QString destination = QFile::encodeName(KShell::quoteArg(QDir::cleanPath(m_backup->dest()+ QDir::separator() + m_backupTimestamp)));
+  QString destination = QFile::encodeName(KShell::quoteArg(QDir::cleanPath(m_backup->dest()+ QDir::separator() + backupTimestamp)));
 
   KProcess proc;
   ProcessListener listener(&proc);
@@ -65,40 +67,65 @@ void BackupManager::doBackup()
 
   // Adds source and dest
 
-  QDir currDir (current);
-  if (currDir.exists()) {
-    proc << QString("--link-dest=%1").arg(current);
-    updateCurrent = true;
+  // Ensure the destination directory exists
+  QDir destDir(m_backup->dest());
+  if (!destDir.exists()) {
+    destDir.mkpath(m_backup->dest());
+  }
+
+  QFileInfo currLinkInfo (current);
+  if (currLinkInfo.exists()) {
+    if (!currLinkInfo.isSymLink()) {
+      kDebug() << current << "is not a symbolic link, going to delete it!";
+      if (!KIO::NetAccess::del(KUrl(current), 0)) {
+        m_error = i18n("Error during deletiong of current directory.");
+        kDebug() << m_error;
+        return false;
+      }
+    } else {
+      proc << QString("--link-dest=%1").arg(current);
+      updateCurrent = true;
+    }
   }
 
   proc << QFile::encodeName(KShell::quoteArg(m_backup->source()));
   proc << QFile::encodeName(KShell::quoteArg(destination));
 
-//  proc << m_backup->source();
-//  proc << destination;
-
   kDebug() << "Starting process: " << proc.program().join(" ") << endl;
 
   // Starts the process
   if ( proc.execute() != 0 ) {
-    emit backupDone( false, i18n("Error starting rsync\n%1").arg(listener.stdErr().join("\n")));
+    m_error = i18n("Error starting rsync\n%1").arg(listener.stdErr().join("\n"));
+    kDebug() << m_error;
+    return false;
   } else {
+    kDebug() << "rsync process completed";
     if (updateCurrent) {
-      KIO::DeleteJob* deleteJob =  KIO::del(current);
-      connect (deleteJob, SIGNAL (finished(KJob*)), this, SLOT (slotDeleteDestinationDone()));
-    } else
-      slotDeleteDestinationDone();
+      kDebug() << "going to delete current" << current;
+      QFile currLink (current);
+      if (! currLink.remove()) {
+        m_error = i18n("Error during deletion of current directory.");
+        kDebug() << m_error;
+        return false;
+      }
+    }
+
+    kDebug() << "going to create current";
+    QDir::setCurrent(m_backup->dest());
+    // create a symlink called current pointing to the latest backup
+    kDebug() << "timestamp" << backupTimestamp;
+    if (!QFile::link(backupTimestamp, "current")) {
+      m_error = i18n("Error during symbolic link creation");
+      kDebug() << m_error;
+      return false;
+    }
   }
+  return true;
 }
 
-void BackupManager::slotDeleteDestinationDone()
+QString BackupManager::error() const
 {
-  QDir::setCurrent(m_backup->dest());
-  // create a symlink called current pointing to the latest backup
-  if (!QFile::link(m_backupTimestamp, "current"))
-    emit backupDone(false, i18n("Error during symbolic link creation"));
-  else
-    emit backupDone(true, "");
+  return m_error;
 }
 
 bool BackupManager::isBackupProgramAvailable()

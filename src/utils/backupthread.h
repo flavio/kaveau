@@ -23,8 +23,6 @@
 
 #include <QtCore/QThread>
 
-class BackupManager;
-
 class BackupThread : public QThread
 {
   Q_OBJECT
@@ -34,12 +32,6 @@ class BackupThread : public QThread
 
   signals:
     void backupFinished(bool successfull, QString message);
-
-  private slots:
-    void backupDone (bool, QString);
-
-  private:
-    BackupManager*  m_manager;
 };
 
 #endif // BACKUPTHREAD_H

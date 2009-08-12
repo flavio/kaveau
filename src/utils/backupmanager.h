@@ -22,6 +22,7 @@
 #define BACKUPMANAGER_H
 
 class Backup;
+class KJob;
 
 #include <QtCore/QString>
 #include <QtCore/QObject>
@@ -33,21 +34,15 @@ class BackupManager : public QObject
   public:
     BackupManager(Backup* backup, QObject* parent = 0);
 
-    void doBackup();
+    bool doBackup();
+    QString error() const;
     static bool isBackupProgramAvailable();
-
-  signals:
-    void backupDone(bool ok, QString error);
-
-  private slots:
-    void slotDeleteDestinationDone();
 
   private:
     Backup* m_backup;
     bool m_running;
     bool m_ok;
     QString m_error;
-    QString m_backupTimestamp;
 };
 
 #endif // BACKUPMANAGER_H

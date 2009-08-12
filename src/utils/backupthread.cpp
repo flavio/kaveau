@@ -24,14 +24,9 @@
 
 void BackupThread::run()
 {
-  m_manager = new BackupManager (ConfigManager::global()->backup());
-  connect ( m_manager, SIGNAL (backupDone(bool,QString)), this, SLOT (backupDone(bool,QString)));
-
-  m_manager->doBackup();
-}
-
-void BackupThread::backupDone(bool ok, QString error)
-{
-  emit backupFinished(ok, error);
-  delete m_manager;
+  BackupManager manager (ConfigManager::global()->backup());
+  if (manager.doBackup())
+    emit backupFinished(true, "");
+  else
+    emit backupFinished(false, manager.error());
 }
