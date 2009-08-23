@@ -7,7 +7,6 @@ set(kaveau_utils_SRC
     common.cpp
     configmanager.cpp
     processlistener.cpp
-    #rdiffmanager.cpp
     backupthread.cpp
     backupmanager.cpp
 )
