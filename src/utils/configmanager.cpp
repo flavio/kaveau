@@ -73,7 +73,7 @@ void ConfigManager::loadConfigFile()
     KConfigGroup group = m_config->group(*it);
     QString source = group.readEntry("Source");
     QString relativeDest;
-    if (group.hasKey("RelativeDest"))
+    if ((group.hasKey("RelativeDest")) && (!group.readEntry("RelativeDest").isEmpty()))
       relativeDest = group.readEntry("RelativeDest");
     else
       relativeDest = calculateRelativeBackupPath();
