@@ -120,8 +120,15 @@ bool AddBackupWizardPage1::isComplete () const
     }
   }
 
-  m_view->selectedUDI->setText(items[0]->data(4,Qt::DisplayRole).toString());
-  return true;
+  QString filesystem = items[0]->data(1,Qt::DisplayRole).toString();
+
+  if ((filesystem == "vfat") || (filesystem == "ntfs")) {
+    m_view->selectedUDI->clear();
+    return false;
+  } else {
+    m_view->selectedUDI->setText(items[0]->data(4,Qt::DisplayRole).toString());
+    return true;
+  }
 }
 
 void AddBackupWizardPage1::slotDeviceItemSelectionChanged()
