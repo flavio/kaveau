@@ -25,9 +25,20 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QStringList>
 
+/*!
+  Class storing the backup settings
+*/
 class Backup
 {
   public:
+    /*!
+      Constructor
+      \param source path of the directory to backup
+      \param diskUdi UDI of the external disk used for backups
+      \param relative path of the backups, external disk mount point is the base path
+      \param excludeList list of items to exclude from the backup
+      \param latestBackupTime latest backup time
+    */
     Backup( QString source, QString diskUdi, QString relativeDest,
             QStringList excludeList,
             QDateTime lastBackupTime = QDateTime());
@@ -56,6 +67,7 @@ class Backup
     void setLastBackupTime(const QDateTime&);
 
   private:
+    //! method used for calculating the final backup path, used when m_source or m_mount are changed
     void updateDest();
 
     QString m_source;

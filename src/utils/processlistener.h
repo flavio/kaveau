@@ -27,6 +27,9 @@
 
 class KProcess;
 
+/*!
+  Class used for reading rsync output
+*/
 class ProcessListener: public QObject
 {
   Q_OBJECT

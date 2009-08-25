@@ -34,8 +34,16 @@ class BackupManager : public QObject
   public:
     BackupManager(Backup* backup, QObject* parent = 0);
 
+    //! performs the backup
     bool doBackup();
+
+    //! return a string descripting the error message
     QString error() const;
+
+    //! check whether rsync binary is installed
+    /*!
+      \return true if rsync is found, false otherwise
+    */
     static bool isBackupProgramAvailable();
 
   private:

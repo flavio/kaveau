@@ -25,6 +25,9 @@
 class KConfig;
 class Backup;
 
+/*!
+  Class used for saving kaveau settings to disk
+*/
 class ConfigManager
 {
   public:

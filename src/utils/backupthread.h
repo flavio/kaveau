@@ -23,6 +23,9 @@
 
 #include <QtCore/QThread>
 
+/*!
+  Thread class used for performing the backup operations and not freezing the ui.
+*/
 class BackupThread : public QThread
 {
   Q_OBJECT
@@ -31,6 +34,10 @@ class BackupThread : public QThread
     void run();
 
   signals:
+    /*! signal emitted when the backup process is completed
+      \param successfull true if the backup completed without errors, otherwise is set to false
+      \param message contains an error description if successfull is false
+    */
     void backupFinished(bool successfull, QString message);
 };
 
