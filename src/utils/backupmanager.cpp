@@ -21,6 +21,7 @@
 #include "backupmanager.h"
 
 #include "backup.h"
+#include "common.h"
 #include "processlistener.h"
 
 #include <kdebug.h>
@@ -28,10 +29,81 @@
 #include <klocale.h>
 #include <kprocess.h>
 #include <kshell.h>
+#include <QtCore/QtAlgorithms>
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
+#include <QtCore/QMap>
+#include <QtCore/QVector>
+
+#define DATE_FORMAT "yyyy-MM-ddThh:mm:ss"
+
+/*!
+  Grouping options for the QDateTime objects
+*/
+enum DATETIME_GROUP_BY {
+  WEEK,
+  WEEKDAY,
+  HOUR
+};
+
+/*!
+  Function used for grouping a set of datetimes object by a certain field.
+  \param times vector containing the datetimes object to group
+  \param group_by field used during the grouping operation
+  \return a map with week number as key and a vector of datetime objects as value
+  \sa DATETIME_GROUP_BY
+*/
+const QMap< int, QVector<QDateTime> > groupDateTime(QVector<QDateTime>& times, DATETIME_GROUP_BY group_by)
+{
+  QMap<int, QVector< QDateTime> > result;
+
+  foreach (QDateTime dateTime, times) {
+    int key;
+
+    switch (group_by) {
+      case WEEK:
+        key = dateTime.date().weekNumber();
+        break;
+      case WEEKDAY:
+        key = dateTime.date().dayOfWeek();
+        break;
+      case HOUR:
+        key = dateTime.time().hour();
+        break;
+    }
+
+    if (result.contains(key)) {
+      result[key].push_back(dateTime);
+    } else {
+      QVector<QDateTime> v;
+      v.push_back(dateTime);
+      result.insert(key, v);
+    }
+  }
+  return result;
+}
+
+/*!
+  Function used for finding the backups that have to be removed.
+  \param weekDates vector containing the datetimes objects to inspect
+  \return a QStringList containing the name of the backup directories to remove
+*/
+const QStringList findOldBackups(QVector<QDateTime>& dates)
+{
+  qSort(dates.begin(), dates.end());
+  if (dates.size() > 1) {
+    dates.pop_back();
+  }
+
+  QStringList directories;
+  foreach(QDateTime dateTime, dates) {
+    directories << dateTime.toString(DATE_FORMAT);
+  }
+
+  return directories;
+}
 
 BackupManager::BackupManager(Backup* backup, QObject* parent)
     : QObject(parent),
@@ -41,7 +113,7 @@ BackupManager::BackupManager(Backup* backup, QObject* parent)
 
 bool BackupManager::doBackup()
 {
-  QString backupTimestamp = QDateTime::currentDateTime().toString("yyyy-MM-ddThh:mm:ss");
+  QString backupTimestamp = QDateTime::currentDateTime().toString(DATE_FORMAT);
   bool updateCurrent = false;
   m_error.clear();
 
@@ -140,5 +212,57 @@ bool BackupManager::isBackupProgramAvailable()
     return true;
   else
     return false;
+}
+
+void BackupManager::purgeOldBackups()
+{
+  QDir backupRoot (m_backup->dest());
+  QStringList backups = backupRoot.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks);
+  QStringList directoriesToRemove;
+
+  QDateTime now = QDateTime::currentDateTime();
+
+  QVector<QDateTime> dates;
+  foreach(QString backup, backups) {
+    QDateTime backupTime = QDateTime::fromString(backup, DATE_FORMAT);
+    if (backupTime.isValid())
+      dates.push_back(backupTime);
+  }
+
+  QMap<int, QVector<QDateTime> > groupedByWeek = groupDateTime(dates, WEEK);
+  QMap<int, QVector<QDateTime> >::const_iterator weekIter;
+
+  for (weekIter = groupedByWeek.begin(); weekIter != groupedByWeek.end(); weekIter++) {
+    QVector<QDateTime> weekDates = weekIter.value();
+    if (weekIter.key() != now.date().weekNumber())
+      directoriesToRemove << findOldBackups(weekDates);
+    else {
+      // will keep on backup per day of the current week
+      QMap<int, QVector<QDateTime> > groupedByWeekDay = groupDateTime(weekDates, WEEKDAY);
+      QMap<int, QVector<QDateTime> >::const_iterator weekDayIter;
+
+      for (weekDayIter = groupedByWeekDay.begin(); weekDayIter != groupedByWeekDay.end(); weekDayIter++) {
+        QVector<QDateTime> weekDayDates = weekDayIter.value();
+        if (weekDayIter.key() != now.date().dayOfWeek())
+          directoriesToRemove << findOldBackups(weekDayDates);
+        else {
+          // will keep on backup per hour of the current day
+          QMap<int, QVector<QDateTime> > groupedByHour = groupDateTime(weekDates, HOUR);
+          QMap<int, QVector<QDateTime> >::const_iterator hourIter;
+
+          for (hourIter = groupedByHour.begin(); hourIter != groupedByHour.end(); hourIter++) {
+            QVector<QDateTime> hourDates = hourIter.value();
+            directoriesToRemove << findOldBackups(hourDates);
+          }
+        }
+      }
+    }
+  }
+
+  if (directoriesToRemove.isEmpty()) {
+    qDebug() << "nothing to delete";
+  } else {
+    qDebug() << "going to delete" << directoriesToRemove;
+  }
 }
 

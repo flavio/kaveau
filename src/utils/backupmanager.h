@@ -37,6 +37,9 @@ class BackupManager : public QObject
     //! performs the backup
     bool doBackup();
 
+    //! performs the backup
+    void purgeOldBackups();
+
     //! return a string descripting the error message
     QString error() const;
 
