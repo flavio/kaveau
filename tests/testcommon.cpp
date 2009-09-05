@@ -32,6 +32,12 @@ class TestCommon: public QObject
     void testFindBackupDirectoriesToDelete_data();
 };
 
+void printDateArray(QStringList dates)
+{
+  foreach(QString string, dates)
+    qDebug() << string;
+}
+
 void TestCommon::testFindBackupDirectoriesToDelete()
 {
   QFETCH(QStringList, dirs);
@@ -39,9 +45,25 @@ void TestCommon::testFindBackupDirectoriesToDelete()
 
   QStringList result = findBackupDirectoriesToDelete(dirs);
   qSort(result.begin(), result.end());
+  qSort(expected.begin(), expected.end());
+
+//  qDebug() << "dirs";
+//  printDateArray(dirs);
+//  qDebug() << "expected";
+//  printDateArray(expected);
+//  qDebug() << "result";
+//  printDateArray(result);
+
   QCOMPARE(result, expected);
 }
 
+/*
+  Function used for finding the old backup directories to remove.
+  Kaveau keeps:
+  - hourly backups for the past 24 hours
+  - daily backups for the past month
+  - weekly backups untill the external disk is full
+*/
 void TestCommon::testFindBackupDirectoriesToDelete_data()
 {
   QTest::addColumn<QStringList>( "dirs" );
@@ -57,39 +79,51 @@ void TestCommon::testFindBackupDirectoriesToDelete_data()
   output.clear();
   QTest::newRow("emtpy list") << input << output;
 
-  // just today
+
+  // 24h backups
   input.clear();
   output.clear();
   dateTime = now;
+  dateTime.setTime(QTime(now.time().hour(), 10, 00));
 
-  dateTime.setTime(QTime(10,20,0,0));
-  input << dateTime.toString(DATE_FORMAT);
+  for (int i = 0; i < 24; i++) {
+    QDateTime time_to_keep = dateTime.addSecs(-i*3600); // i hour(s) ago
+    QDateTime time_to_delete = time_to_keep.addSecs(-60); // i hour(s) and 1m ago
+    input << time_to_keep.toString(DATE_FORMAT);
+    input << time_to_delete.toString(DATE_FORMAT);
+    output << time_to_delete.toString(DATE_FORMAT);
+  }
 
-  dateTime.setTime(QTime(10,10,0,0)); // 10 minutes before
-  input << dateTime.toString(DATE_FORMAT);
-  output << dateTime.toString(DATE_FORMAT);
-
-  qSort(output.begin(), output.end());
-  QTest::newRow("just today") << input << output;
-
-  // today + some days ago
-  input.clear();
-  output.clear();
+  QTest::newRow("last 24 hours backups") << input << output;
+  
+  // last month backups
   dateTime = now;
+  dateTime.setTime(QTime(now.time().hour(), 10, 00));
 
+  for (int i = 2; i < dateTime.date().daysInMonth(); i++) {
+    QDateTime time_to_keep = dateTime.addDays(-i); // i days ago
+    QDateTime time_to_delete = time_to_keep.addSecs(-60); // i day(s) and 1m ago
+    input << time_to_keep.toString(DATE_FORMAT);
+    input << time_to_delete.toString(DATE_FORMAT);
+    output << time_to_delete.toString(DATE_FORMAT);
+  }
+  
+  QTest::newRow("last 24 hours + last month backups") << input << output;
+  
+  // weekly backups
   dateTime = now;
+  dateTime.setTime(QTime(now.time().hour(), 10, 00));
+  dateTime = dateTime.addMonths(-2); // 2 months ago
 
-  dateTime.setTime(QTime(10,20,0,0));
-  input << dateTime.toString(DATE_FORMAT);
-  input << dateTime.addDays(-1).toString(DATE_FORMAT); // 1 day ago
-  dateTime.setTime(QTime(10,10,0,0)); // 10 minutes before
-  input << dateTime.toString(DATE_FORMAT);
-  input << dateTime.addDays(-1).toString(DATE_FORMAT); // 1 day ago
-  output << dateTime.toString(DATE_FORMAT);
-  output << dateTime.addDays(-1).toString(DATE_FORMAT); // 1 day ago
+  for (int i = 0; i < 10; i++) {
+    QDateTime time_to_keep = dateTime.addDays(-i*7); // i week(s) ago
+    QDateTime time_to_delete = time_to_keep.addSecs(-60); // i week(s) and 1m ago
+    input << time_to_keep.toString(DATE_FORMAT);
+    input << time_to_delete.toString(DATE_FORMAT);
+    output << time_to_delete.toString(DATE_FORMAT);
+  }
 
-  qSort(output.begin(), output.end());
-  QTest::newRow("today + some days ago") << input << output;
+  QTest::newRow("last 24 hours + last month + some weeks backups") << input << output;
 }
 
 

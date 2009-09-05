@@ -154,44 +154,65 @@ const QStringList findBackupDirectoriesToDelete(const QStringList& dirs)
     if (backupTime.isValid())
       dates.push_back(backupTime);
   }
+  qSort(dates.begin(), dates.end());
 
-  QMap<int, QList<QDateTime> > groupedByMonth = groupDateTime(dates, MONTH);
-  QMap<int, QList<QDateTime> >::const_iterator monthIter;
+  // find backups performed in the last 24 hours
+  QList<QDateTime> last_24_hours_backups;
+  QList<QDateTime>::iterator last_24_hours_start = qLowerBound(dates.begin(), dates.end(), now.addSecs(-24*60*60));
+  QList<QDateTime>::iterator last_24_hours_end = qUpperBound(dates.begin(), dates.end(), now);
 
-  for (monthIter = groupedByMonth.begin(); monthIter != groupedByMonth.end(); monthIter++) {
-    QList<QDateTime> monthlyBackups = monthIter.value();
-    if (monthIter.key() != now.date().month()) {
-      // not current month, keep weekly backups
-      QMap<int, QList<QDateTime> > groupedByWeek = groupDateTime(monthlyBackups, WEEK);
-      QMap<int, QList<QDateTime> >::const_iterator weekIter;
+  for(QList<QDateTime>::iterator iter = last_24_hours_start; iter != last_24_hours_end; iter++)
+    last_24_hours_backups.push_back(*iter);
 
-      for (weekIter = groupedByWeek.begin(); weekIter != groupedByWeek.end(); weekIter++) {
-        QList<QDateTime> weeklyBackups = weekIter.value();
-        directoriesToRemove << findOldBackups(weeklyBackups);
-      }
-    }
-    else {
-      // current month, keep daily backups
-      QMap<int, QList<QDateTime> > groupedByDay = groupDateTime(monthlyBackups, DAY);
-      QMap<int, QList<QDateTime> >::const_iterator dayIter;
+  if (last_24_hours_end != dates.end())
+    last_24_hours_backups.push_back(*last_24_hours_end);
 
-      for (dayIter = groupedByDay.begin(); dayIter != groupedByDay.end(); dayIter++) {
-        QList<QDateTime> dailyBackups = dayIter.value();
-        if (dayIter.key() == now.date().day()) {
-          // current day, keep hourly backup
-          QMap<int, QList<QDateTime> > groupedByHour = groupDateTime(dailyBackups, HOUR);
-          QMap<int, QList<QDateTime> >::const_iterator hourIter;
+  //keep only one backup per hour
+  QMap<int, QList<QDateTime> > groupedByHour = groupDateTime(last_24_hours_backups, HOUR);
+  QMap<int, QList<QDateTime> >::const_iterator hourIter;
 
-          for (hourIter = groupedByHour.begin(); hourIter != groupedByHour.end(); hourIter++) {
-            QList<QDateTime> hourBackups = hourIter.value();
-            directoriesToRemove << findOldBackups(hourBackups);
-          }
-        } else {
-          // not current day, keep daily backups
-          directoriesToRemove << findOldBackups(dailyBackups);
-        }
-      }
-    }
+  for (hourIter = groupedByHour.begin(); hourIter != groupedByHour.end(); hourIter++) {
+    QList<QDateTime> hourlyBackups = hourIter.value();
+    directoriesToRemove << findOldBackups(hourlyBackups);
+  }
+
+  // remove the processed dates
+  if (last_24_hours_end != dates.end())
+    last_24_hours_end++;
+  dates.erase(last_24_hours_start, last_24_hours_end);
+
+  // find backups performed in the last month
+  QList<QDateTime> last_month_backups;
+  QList<QDateTime>::iterator last_month_start = qLowerBound(dates.begin(), dates.end(), now.addMonths(-1));
+  QList<QDateTime>::iterator last_month_end = qUpperBound(dates.begin(), dates.end(), now);
+
+  for(QList<QDateTime>::iterator iter = last_month_start; iter != last_month_end; iter++)
+    last_month_backups.push_back(*iter);
+
+  if (last_month_end != dates.end())
+    last_month_backups.push_back(*last_month_end);
+
+  //keep only one backup per day
+  QMap<int, QList<QDateTime> > groupedByDay = groupDateTime(last_month_backups, DAY);
+  QMap<int, QList<QDateTime> >::const_iterator dayIter;
+
+  for (dayIter = groupedByDay.begin(); dayIter != groupedByDay.end(); dayIter++) {
+    QList<QDateTime> dailyBackups = dayIter.value();
+    directoriesToRemove << findOldBackups(dailyBackups);
+  }
+
+  // remove the processed dates
+  if (last_month_end != dates.end())
+    last_month_end++;
+  dates.erase(last_month_start, last_month_end);
+
+  // keep only weekly backups of the remaining dates
+  QMap<int, QList<QDateTime> > groupedByWeek = groupDateTime(dates, WEEK);
+  QMap<int, QList<QDateTime> >::const_iterator weekIter;
+
+  for (weekIter = groupedByWeek.begin(); weekIter != groupedByWeek.end(); weekIter++) {
+    QList<QDateTime> weeklyBackups = weekIter.value();
+    directoriesToRemove << findOldBackups(weeklyBackups);
   }
 
   return directoriesToRemove;
