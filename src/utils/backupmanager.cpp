@@ -77,17 +77,37 @@ bool BackupManager::doBackup()
   }
 
   QFileInfo currLinkInfo (current);
-  if (currLinkInfo.exists()) {
-    if (!currLinkInfo.isSymLink()) {
-      kDebug() << current << "is not a symbolic link, going to delete it!";
-      if (!KIO::NetAccess::del(KUrl(current), 0)) {
-        m_error = i18n("Error during deletiong of current directory.");
-        kDebug() << m_error;
-        return false;
+  if (currLinkInfo.exists() && !currLinkInfo.isSymLink()) {
+    // it's a directory
+    kDebug() << current << "is not a symbolic link, going to delete it!";
+    if (!KIO::NetAccess::del(KUrl(current), 0)) {
+      m_error = i18n("Error during deletiong of current directory.");
+      kDebug() << m_error;
+      return false;
+    }
+  } else if (currLinkInfo.exists() && currLinkInfo.isSymLink()) {
+    // it's a non-broken symlink
+    proc << QString("--link-dest=%1").arg(current);
+    updateCurrent = true;
+  } else if (!currLinkInfo.exists() && currLinkInfo.isSymLink()) {
+    // it's a broken symlink
+
+    // remove the broken symlink
+    if (!QFile::remove(current)) {
+      m_error = i18n("current is a broken symlink, error while trying to remove it.");
+      kDebug() << m_error;
+      return false;
+    }
+
+    QString latestBackup = findLatestBackup();
+    if (!latestBackup.isEmpty()) {
+      QDir::setCurrent(m_backup->dest());
+      // create a symlink called current pointing to the latest backup
+
+      if (QFile::link(latestBackup, "current")) {
+        proc << QString("--link-dest=%1").arg(current);
+        updateCurrent = true;
       }
-    } else {
-      proc << QString("--link-dest=%1").arg(current);
-      updateCurrent = true;
     }
   }
 
@@ -152,6 +172,23 @@ bool BackupManager::isBackupProgramAvailable()
     return true;
   else
     return false;
+}
+
+QString BackupManager::findLatestBackup() const
+{
+  QList<QDateTime> dates;
+  QDir backupRoot (m_backup->dest());
+  QStringList backups = backupRoot.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks);
+
+  foreach (QString backup, backups)
+    dates << QDateTime::fromString( backup, DATE_FORMAT);
+
+  qSort(dates.begin(), dates.end());
+
+  if (dates.isEmpty())
+    return "";
+  else
+    return dates.last().toString(DATE_FORMAT);
 }
 
 void BackupManager::purgeOldBackups()

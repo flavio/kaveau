@@ -49,6 +49,9 @@ class BackupManager : public QObject
     */
     static bool isBackupProgramAvailable();
 
+    //! returns latest backup timestamp
+    QString findLatestBackup() const;
+
   private:
     Backup* m_backup;
     bool m_running;
