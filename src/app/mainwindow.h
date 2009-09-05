@@ -75,7 +75,6 @@ class MainWindow : public KXmlGuiWindow
     void slotDeviceRemoved(QString);
     void slotDeviceAccessibilityChanged(bool,QString);
     void slotBackupPartitionMounted(Solid::ErrorType error,QVariant message,QString udi);
-    void slotDeleteDestinationDone();
 
   private:
     Ui::MainWidgetBase* m_mainWidget;

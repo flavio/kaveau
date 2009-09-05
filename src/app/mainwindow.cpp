@@ -26,7 +26,7 @@
 #include <kactioncollection.h>
 #include <kdiskfreespaceinfo.h>
 #include <kiconloader.h>
-#include <kio/deletejob.h>
+#include <kio/netaccess.h>
 #include <kmessagebox.h>
 #include <knotification.h>
 #include <kstandardaction.h>
@@ -145,8 +145,10 @@ void MainWindow::slotStartBackupWizard()
     if (wizard.deleteDestination()) {
       kDebug() << "Going to erase" << backup->dest();
       m_mainWidget->btnBackup->setEnabled(false);
-      KIO::DeleteJob* deleteJob =  KIO::del(backup->dest());
-      connect (deleteJob, SIGNAL (finished(KJob*)), this, SLOT (slotDeleteDestinationDone()));
+      if (KIO::NetAccess::del(KUrl(backup->dest()), 0))
+        createBackupDirectory();
+      else
+        showGenericError(i18n("Unable to delete") + backup->dest(), true);
     } else {
       m_mainWidget->btnBackup->setEnabled(false);
       createBackupDirectory();
@@ -162,12 +164,6 @@ void MainWindow::slotEditFilters()
     QStringList excludedItems = dialog.excludedItems();
     backup->setExcludeList(excludedItems);
   }
-}
-
-void MainWindow::slotDeleteDestinationDone()
-{
-  kDebug() << ConfigManager::global()->backup()->dest() << "deleted";
-  createBackupDirectory();
 }
 
 void MainWindow::createBackupDirectory()
