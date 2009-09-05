@@ -92,7 +92,7 @@ MainWindow::MainWindow(QWidget *parent)
 
   if (!isRdiffAvailable()) {
     showGenericError(i18n("rdiff-backup is not installed"));
-  } else if (m_backupDiskPlugged)
+  } else if ((m_backupDiskPlugged) && (isBackupPartitionMounted()))
     mountBackupPartition();
 
   updateBackupView();
@@ -246,8 +246,13 @@ void MainWindow::updateBackupView()
   }
 
   if (m_backupDiskPlugged) {
-    m_mainWidget->labelDevice->setText (i18n("Connected"));
-    m_mainWidget->btnBackup->setEnabled(true);
+    if (isBackupPartitionMounted()) {
+      m_mainWidget->labelDevice->setText (i18n("Connected"));
+      m_mainWidget->btnBackup->setEnabled(true);
+    } else {
+      m_mainWidget->labelDevice->setText (i18n ("Not Accesible"));
+      m_mainWidget->btnBackup->setEnabled(false);
+    }
   } else {
     m_mainWidget->labelDevice->setText (i18n("Not connected"));
     m_mainWidget->btnBackup->setEnabled(false);
@@ -367,11 +372,42 @@ void MainWindow::slotDeviceRemoved(QString udi)
   }
 }
 
+void MainWindow::slotDeviceAccessibilityChanged(bool accessible, QString udi)
+{
+  if (ConfigManager::global()->backup()->diskUdi().compare(udi,Qt::CaseSensitive) == 0) {
+    if (accessible) {
+      Solid::Device device (udi);
+      Solid::StorageAccess* storageAccess = (Solid::StorageAccess*) device.asDeviceInterface(Solid::DeviceInterface::StorageAccess);
+
+      QFileInfo info (storageAccess->filePath());
+      m_mount = storageAccess->filePath();
+
+      // update backup dest
+      ConfigManager::global()->backup()->setMount(m_mount);
+
+      if (info.isWritable())
+        backupIfNeeded();
+      else
+        showGenericError(i18n("No write permission on the backup directory"));
+    } else {
+      ConfigManager::global()->backup()->setMount("");
+      updateDiskUsage("");
+    }
+
+    updateBackupView();
+  }
+}
+
 
 void MainWindow::backupIfNeeded()
 {
   if (!m_backupDiskPlugged) {
     m_mainWidget->labelNextBackup->setText(i18n("next time the backup disk will be plugged"));
+    return;
+  }
+
+  if (!isBackupPartitionMounted()) {
+    mountBackupPartition();
     return;
   }
 
@@ -409,6 +445,24 @@ bool MainWindow::isBackupDiskPlugged()
   else
     return false;
 }
+
+bool MainWindow::isBackupPartitionMounted()
+{
+  Backup* backup = ConfigManager::global()->backup();
+
+  if (backup == 0)
+    return false;
+
+  Solid::Device device (backup->diskUdi());
+  Solid::StorageAccess* storageAccess = (Solid::StorageAccess*) device.asDeviceInterface(Solid::DeviceInterface::StorageAccess);
+  bool accesible =  storageAccess->isAccessible();
+
+  if (!accesible)
+    connect(storageAccess, SIGNAL(accessibilityChanged(bool,QString)), this, SLOT(slotDeviceAccessibilityChanged(bool,QString)));
+
+  return accesible;
+}
+
 
 void MainWindow::mountBackupPartition()
 {
@@ -451,6 +505,7 @@ void MainWindow::slotBackupPartitionMounted(Solid::ErrorType error,QVariant mess
   }
 
   updateDiskUsage(m_mount);
+  updateBackupView();
 }
 
 bool MainWindow::isRdiffAvailable()

@@ -55,7 +55,11 @@ void Backup::setSource(const QString& source)
 void Backup::setMount(const QString& mount)
 {
   m_mount = mount;
-  updateDest();
+
+  if (mount.isEmpty())
+    m_dest = "-";
+  else
+    updateDest();
 }
 
 QString Backup::mount() const
