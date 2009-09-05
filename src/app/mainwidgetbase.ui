@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>435</width>
+    <width>473</width>
     <height>223</height>
    </rect>
   </property>
@@ -296,7 +296,7 @@
                  <number>0</number>
                 </property>
                 <property name="value">
-                 <number>216249</number>
+                 <number>216537</number>
                 </property>
                </widget>
               </item>
@@ -498,6 +498,13 @@
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="btnPurge">
+       <property name="text">
+        <string>Purge</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="btnBackup">
        <property name="text">
         <string>Perform backup</string>
@@ -507,10 +514,6 @@
     </layout>
    </item>
   </layout>
-  <zorder></zorder>
-  <zorder>groupBox</zorder>
-  <zorder></zorder>
-  <zorder></zorder>
   <zorder></zorder>
   <zorder></zorder>
  </widget>

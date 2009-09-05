@@ -120,9 +120,18 @@ bool BackupManager::doBackup()
     if (!QFile::link(backupTimestamp, "current")) {
       m_error = i18n("Error during symbolic link creation");
       kDebug() << m_error;
+
+      // reset current directory, otherwise it will be impossible to umount the
+      // external device
+      QDir::setCurrent(QDir::home().path());
+
       return false;
     }
   }
+
+  // reset current directory, otherwise it will be impossible to umount the
+  // external device
+  QDir::setCurrent(QDir::home().path());
   return true;
 }
 
@@ -152,10 +161,13 @@ void BackupManager::purgeOldBackups()
 
   QStringList directoriesToRemove = findBackupDirectoriesToDelete(backups);
 
-  if (directoriesToRemove.isEmpty()) {
-    qDebug() << "nothing to delete";
-  } else {
-    qDebug() << "going to delete" << directoriesToRemove;
+  foreach(QString dir, directoriesToRemove) {
+    QString dirToRemove = QDir::cleanPath(m_backup->dest() + QDir::separator() + dir);
+    if (QFile::exists(dirToRemove)) {
+      kDebug() << "Going to remove old backup directory:" << dirToRemove;
+      KIO::NetAccess::del(KUrl(dirToRemove), 0);
+      kDebug() << dirToRemove << "removed";
+    }
   }
 }
 

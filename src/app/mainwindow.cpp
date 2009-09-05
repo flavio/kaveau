@@ -54,8 +54,9 @@
 #include "configmanager.h"
 #include "backupmanager.h"
 #include "backupthread.h"
+#include "backupremoverthread.h"
 
-#include <KDebug>
+#include <kdebug.h>
 
 #define BACKUP_INTERVAL 3600 // backup every hour
 
@@ -83,6 +84,9 @@ MainWindow::MainWindow(QWidget *parent)
 
   m_backupThread = new BackupThread();
   connect (m_backupThread, SIGNAL(backupFinished(bool,QString)), this, SLOT(slotBackupFinished(bool, QString)));
+
+  m_backupRemoverThread = new BackupRemoverThread();
+  m_backupRemoverThread->start();
 
   m_backupDiskPlugged = isBackupDiskPlugged();
 
@@ -119,6 +123,8 @@ void MainWindow::setupConnections()
   connect (m_mainWidget->btnBackup, SIGNAL(clicked()), this, SLOT(slotStartBackup()));
   connect (m_mainWidget->btnFilter, SIGNAL(clicked()), this, SLOT(slotEditFilters()));
   connect (m_mainWidget->btnDetails, SIGNAL(clicked()), this, SLOT(slotShowLog()));
+
+  connect (m_mainWidget->btnPurge, SIGNAL(clicked()), this, SLOT(slotPurgeOldBackups()));
 
 
   Solid::DeviceNotifier* notifier = Solid::DeviceNotifier::instance();
@@ -184,13 +190,23 @@ void MainWindow::createBackupDirectory()
      event->ignore();
    } else {
      if (m_backupThread->isRunning()) {
-      if (KMessageBox::questionYesNo(this, i18n("A backup is in progress, are you sure you want to quit kaveau?!"), i18n("WARNING - backup running")) ==   KMessageBox::Yes)
+       if (KMessageBox::questionYesNo(this, i18n("A backup is in progress, are you sure you want to quit kaveau?!"), i18n("WARNING - backup running")) ==   KMessageBox::Yes) {
         m_backupThread->terminate();
-      else
+        if (m_backupRemoverThread->isRunning())
+          m_backupRemoverThread->terminate();
+      } else {
         event->ignore();
+      }
      }
    }
  }
+
+void MainWindow::slotPurgeOldBackups()
+{
+  if (!m_backupRemoverThread->isRunning()) {
+    m_backupRemoverThread->start();
+  }
+}
 
 void MainWindow::updateBackupView()
 {

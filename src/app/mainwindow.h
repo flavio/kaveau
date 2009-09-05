@@ -30,6 +30,7 @@ namespace Ui {
 }
 
 class BackupThread;
+class BackupRemoverThread;
 class KSystemTrayIcon;
 class QCloseEvent;
 
@@ -62,6 +63,7 @@ class MainWindow : public KXmlGuiWindow
     void scheduleNextBackup(int);
 
   private slots:
+    void slotPurgeOldBackups();
     void slotStartBackupWizard();
     void slotStartBackup();
     void slotShowLog();
@@ -76,6 +78,7 @@ class MainWindow : public KXmlGuiWindow
     Ui::MainWidgetBase* m_mainWidget;
     KSystemTrayIcon* m_trayIcon;
     BackupThread* m_backupThread;
+    BackupRemoverThread* m_backupRemoverThread;
     bool m_backupDiskPlugged;
     QString m_lastError;
     QString m_mount;

@@ -9,6 +9,7 @@ set(kaveau_utils_SRC
     processlistener.cpp
     backupthread.cpp
     backupmanager.cpp
+    backupremoverthread.cpp
 )
 
 KDE4_ADD_LIBRARY(kaveau_utils STATIC ${kaveau_utils_SRC})
