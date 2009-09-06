@@ -21,11 +21,11 @@
 #include "backupremoverthread.h"
 #include "backup.h"
 #include "backupmanager.h"
-#include "configmanager.h"
+#include "settings.h"
 
 void BackupRemoverThread::run()
 {
-  BackupManager manager (ConfigManager::global()->backup());
+  BackupManager manager (Settings::global());
   manager.purgeOldBackups();
 }
 

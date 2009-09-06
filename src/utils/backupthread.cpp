@@ -20,11 +20,11 @@
 
 #include "backupthread.h"
 #include "backupmanager.h"
-#include "configmanager.h"
+#include "settings.h"
 
 void BackupThread::run()
 {
-  BackupManager manager (ConfigManager::global()->backup());
+  BackupManager manager (Settings::global());
   if (manager.doBackup())
     emit backupFinished(true, "");
   else

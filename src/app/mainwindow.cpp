@@ -50,11 +50,10 @@
 #include "excludeditemsdialog.h"
 #include "addbackupwizard.h"
 #include "logdialog.h"
-#include "backup.h"
-#include "configmanager.h"
 #include "backupmanager.h"
 #include "backupthread.h"
 #include "backupremoverthread.h"
+#include "settings.h"
 
 #include <kdebug.h>
 
@@ -137,18 +136,18 @@ void MainWindow::slotStartBackupWizard()
   AddBackupWizard wizard(this);
   wizard.exec();
   if (wizard.completed()) {
-    Backup* backup = wizard.backup();
-    ConfigManager::global()->setBackup(backup);
+    *Settings::global() = wizard.backup();
+
     m_backupDiskPlugged = true;
     updateBackupView();
 
     if (wizard.deleteDestination()) {
-      kDebug() << "Going to erase" << backup->dest();
+      kDebug() << "Going to erase" << Settings::global()->dest();
       m_mainWidget->btnBackup->setEnabled(false);
-      if (KIO::NetAccess::del(KUrl(backup->dest()), 0))
+      if (KIO::NetAccess::del(KUrl(Settings::global()->dest()), 0))
         createBackupDirectory();
       else
-        showGenericError(i18n("Unable to delete") + backup->dest(), true);
+        showGenericError(i18n("Unable to delete") + Settings::global()->dest(), true);
     } else {
       m_mainWidget->btnBackup->setEnabled(false);
       createBackupDirectory();
@@ -158,20 +157,20 @@ void MainWindow::slotStartBackupWizard()
 
 void MainWindow::slotEditFilters()
 {
-  Backup* backup = ConfigManager::global()->backup();
-  ExcludedItemsDialog dialog(backup->excludeList(), this);
+  Settings* settings = Settings::global();
+  ExcludedItemsDialog dialog(settings->excludeList(), this);
   if (dialog.exec() == QDialog::Accepted) {
     QStringList excludedItems = dialog.excludedItems();
-    backup->setExcludeList(excludedItems);
+    settings->setExcludeList(excludedItems);
   }
 }
 
 void MainWindow::createBackupDirectory()
 {
-  Backup* backup = ConfigManager::global()->backup();
+  Settings* settings = Settings::global();
   QDir dir;
-  if (dir.mkpath(backup->dest())) {
-    kDebug() << backup->dest() << "created";
+  if (dir.mkpath(settings->dest())) {
+    kDebug() << settings->dest() << "created";
     backupIfNeeded();
     m_mainWidget->btnBackup->setEnabled(true);
   } else {
@@ -206,25 +205,24 @@ void MainWindow::slotPurgeOldBackups()
 
 void MainWindow::updateBackupView()
 {
-  ConfigManager* backupManager = ConfigManager::global();
-  Backup* backup = backupManager->backup();
+  Settings* settings = Settings::global();
 
-  if (backup == 0) {
+  if (settings == 0) {
     m_mainWidget->stackedWidget->setCurrentIndex(CONFIGURE_PAGE);
     m_mainWidget->btnBackup->setEnabled(false);
     m_mainWidget->btnFilter->setEnabled(false);
     return;
   }
 
-  m_mainWidget->labelSource->setText( backup->source());
-  m_mainWidget->labelDest->setText( backup->dest());
+  m_mainWidget->labelSource->setText( settings->source());
+  m_mainWidget->labelDest->setText( settings->dest());
   m_mainWidget->btnFilter->setEnabled(true);
 
   KIconLoader* iconLoader = KIconLoader::global();
 
-  if (backup->lastBackupTime().isValid()) {
+  if (settings->lastBackupTime().isValid()) {
     QDateTime now = QDateTime::currentDateTime();
-    int daysTo = backup->lastBackupTime().daysTo(now);
+    int daysTo = settings->lastBackupTime().daysTo(now);
 
     if (daysTo > 7) {
       m_mainWidget->labelTime->setText(i18n("more than one week ago"));
@@ -233,7 +231,7 @@ void MainWindow::updateBackupView()
       m_mainWidget->labelTime->setText(i18n("%1 day(s) ago").arg(daysTo));
       m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-medium", KIconLoader::Small));
     } else {
-      m_mainWidget->labelTime->setText(i18n("Today at %1").arg(backup->lastBackupTime().toString("hh:mm")));
+      m_mainWidget->labelTime->setText(i18n("Today at %1").arg(settings->lastBackupTime().toString("hh:mm")));
       m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-high", KIconLoader::Small));
     }
   } else {
@@ -307,7 +305,7 @@ void MainWindow::slotBackupFinished(bool ok, QString message)
     notification->setFlags( KNotification::RaiseWidgetOnActivation);
 
     QDateTime now = QDateTime::currentDateTime();
-    ConfigManager::global()->backup()->setLastBackupTime(now);
+    Settings::global()->setLastBackupTime(now);
   }
   else {
     kDebug() << "error during backup:" << message;
@@ -332,18 +330,18 @@ void MainWindow::slotDeviceAdded(QString udi)
 {
   Solid::Device device(udi);
 
-  Backup* backup = ConfigManager::global()->backup();
+  Settings* settings = Settings::global();
 
   if (m_backupDiskPlugged)
     return;
 
-  if ((backup != 0) && (backup->diskUdi().compare(udi, Qt::CaseSensitive) == 0)) {
+  if ((settings != 0) && (settings->diskUdi().compare(udi, Qt::CaseSensitive) == 0)) {
     // backup disk has been connected
     m_mainWidget->labelDevice->setText (i18n ("Connected"));
     m_backupDiskPlugged = true;
     mountBackupPartition();
     updateBackupView();
-  } else if ((backup == 0)  && (device.isDeviceInterface(Solid::DeviceInterface::StorageDrive))) {
+  } else if ((settings == 0)  && (device.isDeviceInterface(Solid::DeviceInterface::StorageDrive))) {
     // we don't have a backup disk, maybe we can use this one
     Solid::StorageDrive* drive = (Solid::StorageDrive*) device.asDeviceInterface(Solid::DeviceInterface::StorageDrive);
 
@@ -361,7 +359,7 @@ void MainWindow::slotDeviceAdded(QString udi)
 
 void MainWindow::slotDeviceRemoved(QString udi)
 {
-  if (ConfigManager::global()->backup()->diskUdi().compare(udi,Qt::CaseSensitive) == 0) {
+  if (Settings::global()->diskUdi().compare(udi,Qt::CaseSensitive) == 0) {
     m_mainWidget->labelDevice->setText (i18n ("Not Connected"));
     m_mainWidget->btnBackup->setEnabled(false);
     m_backupDiskPlugged = false;
@@ -370,7 +368,7 @@ void MainWindow::slotDeviceRemoved(QString udi)
 
 void MainWindow::slotDeviceAccessibilityChanged(bool accessible, QString udi)
 {
-  if (ConfigManager::global()->backup()->diskUdi().compare(udi,Qt::CaseSensitive) == 0) {
+  if (Settings::global()->diskUdi().compare(udi,Qt::CaseSensitive) == 0) {
     if (accessible) {
       Solid::Device device (udi);
       Solid::StorageAccess* storageAccess = (Solid::StorageAccess*) device.asDeviceInterface(Solid::DeviceInterface::StorageAccess);
@@ -379,14 +377,14 @@ void MainWindow::slotDeviceAccessibilityChanged(bool accessible, QString udi)
       m_mount = storageAccess->filePath();
 
       // update backup dest
-      ConfigManager::global()->backup()->setMount(m_mount);
+      Settings::global()->setMount(m_mount);
 
       if (info.isWritable())
         backupIfNeeded();
       else
         showGenericError(i18n("No write permission on the backup directory"));
     } else {
-      ConfigManager::global()->backup()->setMount("");
+      Settings::global()->setMount("");
       updateDiskUsage("");
     }
 
@@ -407,8 +405,7 @@ void MainWindow::backupIfNeeded()
     return;
   }
 
-  Backup* backup = ConfigManager::global()->backup();
-  QDateTime lastBackup = backup->lastBackupTime();
+  QDateTime lastBackup = Settings::global()->lastBackupTime();
   QDateTime now = QDateTime::currentDateTime();
 
   if ((!lastBackup.isValid()) or (lastBackup.secsTo(now) > BACKUP_INTERVAL)) {
@@ -430,12 +427,12 @@ void MainWindow::scheduleNextBackup(int whithinSeconds)
 
 bool MainWindow::isBackupDiskPlugged()
 {
-  Backup* backup = ConfigManager::global()->backup();
+  Settings* settings = Settings::global();
 
-  if (backup == 0)
+  if (settings->diskUdi().isEmpty())
     return false;
 
-  Solid::Device device (backup->diskUdi());
+  Solid::Device device (settings->diskUdi());
   if (device.isValid())
     return true;
   else
@@ -444,12 +441,12 @@ bool MainWindow::isBackupDiskPlugged()
 
 bool MainWindow::isBackupPartitionMounted()
 {
-  Backup* backup = ConfigManager::global()->backup();
+  Settings* settings = Settings::global();
 
-  if (backup == 0)
+  if (settings->diskUdi().isEmpty())
     return false;
 
-  Solid::Device device (backup->diskUdi());
+  Solid::Device device (settings->diskUdi());
   Solid::StorageAccess* storageAccess = (Solid::StorageAccess*) device.asDeviceInterface(Solid::DeviceInterface::StorageAccess);
   bool accesible =  storageAccess->isAccessible();
 
@@ -463,11 +460,11 @@ bool MainWindow::isBackupPartitionMounted()
 void MainWindow::mountBackupPartition()
 {
   m_mount = "";
-  Solid::Device device (ConfigManager::global()->backup()->diskUdi());
+  Solid::Device device (Settings::global()->diskUdi());
   Solid::StorageAccess* storageAccess = (Solid::StorageAccess*) device.asDeviceInterface(Solid::DeviceInterface::StorageAccess);
 
   if (storageAccess->isAccessible()) {
-    slotBackupPartitionMounted(Solid::NoError, QVariant(), ConfigManager::global()->backup()->diskUdi());
+    slotBackupPartitionMounted(Solid::NoError, QVariant(), Settings::global()->diskUdi());
     return;
   }
 
@@ -487,7 +484,7 @@ void MainWindow::slotBackupPartitionMounted(Solid::ErrorType error,QVariant mess
     m_mount = storageAccess->filePath();
 
     // update backup dest
-    ConfigManager::global()->backup()->setMount(m_mount);
+    Settings::global()->setMount(m_mount);
 
     if (info.isWritable()) {
       backupIfNeeded();

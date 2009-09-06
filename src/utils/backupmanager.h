@@ -21,7 +21,7 @@
 #ifndef BACKUPMANAGER_H
 #define BACKUPMANAGER_H
 
-class Backup;
+class Settings;
 class KJob;
 
 #include <QtCore/QString>
@@ -32,7 +32,7 @@ class BackupManager : public QObject
   Q_OBJECT
 
   public:
-    BackupManager(Backup* backup, QObject* parent = 0);
+    BackupManager(Settings* settings, QObject* parent = 0);
 
     //! performs the backup
     bool doBackup();
@@ -53,7 +53,7 @@ class BackupManager : public QObject
     QString findLatestBackup() const;
 
   private:
-    Backup* m_backup;
+    Settings* m_settings;
     bool m_running;
     bool m_ok;
     QString m_error;

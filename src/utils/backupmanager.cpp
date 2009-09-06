@@ -20,11 +20,9 @@
 
 #include "backupmanager.h"
 
-#include "backup.h"
 #include "common.h"
 #include "processlistener.h"
-
-#include "common.h"
+#include "settings.h"
 
 #include <kdebug.h>
 #include <kio/netaccess.h>
@@ -36,9 +34,9 @@
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 
-BackupManager::BackupManager(Backup* backup, QObject* parent)
+BackupManager::BackupManager(Settings* settings, QObject* parent)
     : QObject(parent),
-      m_backup (backup)
+      m_settings (settings)
 {
 }
 
@@ -48,8 +46,8 @@ bool BackupManager::doBackup()
   bool updateCurrent = false;
   m_error.clear();
 
-  QString current = QFile::encodeName(KShell::quoteArg(QDir::cleanPath(m_backup->dest() + QDir::separator() + "current")));
-  QString destination = QFile::encodeName(KShell::quoteArg(QDir::cleanPath(m_backup->dest()+ QDir::separator() + backupTimestamp)));
+  QString current = QFile::encodeName(KShell::quoteArg(QDir::cleanPath(m_settings->dest() + QDir::separator() + "current")));
+  QString destination = QFile::encodeName(KShell::quoteArg(QDir::cleanPath(m_settings->dest()+ QDir::separator() + backupTimestamp)));
 
   KProcess proc;
   ProcessListener listener(&proc);
@@ -57,7 +55,7 @@ bool BackupManager::doBackup()
   proc.setOutputChannelMode(KProcess::SeparateChannels);
 
   // Adds include and exclude
-  foreach (QString item, m_backup->excludeList()) {
+  foreach (QString item, m_settings->excludeList()) {
     proc << "--exclude";
     proc << QFile::encodeName(KShell::quoteArg(item));
   }
@@ -71,9 +69,9 @@ bool BackupManager::doBackup()
   // Adds source and dest
 
   // Ensure the destination directory exists
-  QDir destDir(m_backup->dest());
+  QDir destDir(m_settings->dest());
   if (!destDir.exists()) {
-    destDir.mkpath(m_backup->dest());
+    destDir.mkpath(m_settings->dest());
   }
 
   QFileInfo currLinkInfo (current);
@@ -101,7 +99,7 @@ bool BackupManager::doBackup()
 
     QString latestBackup = findLatestBackup();
     if (!latestBackup.isEmpty()) {
-      QDir::setCurrent(m_backup->dest());
+      QDir::setCurrent(m_settings->dest());
       // create a symlink called current pointing to the latest backup
 
       if (QFile::link(latestBackup, "current")) {
@@ -111,7 +109,7 @@ bool BackupManager::doBackup()
     }
   }
 
-  proc << QFile::encodeName(KShell::quoteArg(m_backup->source()));
+  proc << QFile::encodeName(KShell::quoteArg(m_settings->source()));
   proc << QFile::encodeName(KShell::quoteArg(destination));
 
   kDebug() << "Starting process: " << proc.program().join(" ") << endl;
@@ -134,7 +132,7 @@ bool BackupManager::doBackup()
     }
 
     kDebug() << "going to create current";
-    QDir::setCurrent(m_backup->dest());
+    QDir::setCurrent(m_settings->dest());
     // create a symlink called current pointing to the latest backup
     kDebug() << "timestamp" << backupTimestamp;
     if (!QFile::link(backupTimestamp, "current")) {
@@ -177,7 +175,7 @@ bool BackupManager::isBackupProgramAvailable()
 QString BackupManager::findLatestBackup() const
 {
   QList<QDateTime> dates;
-  QDir backupRoot (m_backup->dest());
+  QDir backupRoot (m_settings->dest());
   QStringList backups = backupRoot.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks);
 
   foreach (QString backup, backups)
@@ -193,13 +191,13 @@ QString BackupManager::findLatestBackup() const
 
 void BackupManager::purgeOldBackups()
 {
-  QDir backupRoot (m_backup->dest());
+  QDir backupRoot (m_settings->dest());
   QStringList backups = backupRoot.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks);
 
   QStringList directoriesToRemove = findBackupDirectoriesToDelete(backups);
 
   foreach(QString dir, directoriesToRemove) {
-    QString dirToRemove = QDir::cleanPath(m_backup->dest() + QDir::separator() + dir);
+    QString dirToRemove = QDir::cleanPath(m_settings->dest() + QDir::separator() + dir);
     if (QFile::exists(dirToRemove)) {
       kDebug() << "Going to remove old backup directory:" << dirToRemove;
       KIO::NetAccess::del(KUrl(dirToRemove), 0);

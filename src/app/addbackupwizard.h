@@ -24,11 +24,11 @@
 #include <QtGui/QWizard>
 #include <QtGui/QWizardPage>
 
+#include <settings.h>
+
 class AddBackupWizardPage1;
 class AddBackupWizardPage2;
 class AddBackupWizardPage3;
-
-class Backup;
 
 class AddBackupWizard: public QWizard
 {
@@ -38,7 +38,7 @@ class AddBackupWizard: public QWizard
 
     bool completed() const { return m_completed; }
 
-    Backup* backup();
+    Settings backup();
     bool deleteDestination() const;
 
   private:

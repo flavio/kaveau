@@ -23,7 +23,6 @@
 #include "addbackupwizardpage1.h"
 #include "addbackupwizardpage2.h"
 #include "addbackupwizardpage3.h"
-#include "backup.h"
 
 #include <KIconLoader>
 #include <KLocale>
@@ -61,7 +60,7 @@ void AddBackupWizard::slotFinishClicked()
   m_completed = true;
 }
 
-Backup* AddBackupWizard::backup()
+Settings AddBackupWizard::backup()
 {
   KUser user;
   QString source = user.homeDir();
@@ -70,10 +69,10 @@ Backup* AddBackupWizard::backup()
   QString deviceUDI = page2->deviceUDI();
   QStringList excludedDirs = page3->excludedDirs();
 
-  Backup* backup = new Backup(source, deviceUDI, relativeDest, excludedDirs);
-  backup->setDest( destination);
+  Settings settings (source, deviceUDI, relativeDest, excludedDirs);
+  settings.setDest( destination);
 
-  return backup;
+  return settings;
 }
 
 bool AddBackupWizard::deleteDestination() const
