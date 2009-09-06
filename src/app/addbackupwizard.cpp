@@ -60,7 +60,7 @@ void AddBackupWizard::slotFinishClicked()
   m_completed = true;
 }
 
-Settings AddBackupWizard::backup()
+Settings AddBackupWizard::settings()
 {
   KUser user;
   QString source = user.homeDir();
@@ -68,9 +68,10 @@ Settings AddBackupWizard::backup()
   QString relativeDest = page2->relativeDestination();
   QString deviceUDI = page2->deviceUDI();
   QStringList excludedDirs = page3->excludedDirs();
+  QString mountPoint = page2->mountPoint();
 
   Settings settings (source, deviceUDI, relativeDest, excludedDirs);
-  settings.setDest( destination);
+  settings.setMount( mountPoint);
 
   return settings;
 }

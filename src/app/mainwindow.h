@@ -23,12 +23,11 @@
 
 #include <KXmlGuiWindow>
 
-#include <solid/solidnamespace.h>
-
 namespace Ui {
   class MainWidgetBase;
 }
 
+class BackupDevice;
 class BackupThread;
 class BackupRemoverThread;
 class KSystemTrayIcon;
@@ -54,10 +53,6 @@ class MainWindow : public KXmlGuiWindow
     void updateDiskUsage(const QString&);
     void showGenericError(const QString& message, bool disableBackup = true);
 
-    bool isBackupDiskPlugged();
-    bool isBackupPartitionMounted();
-    void createBackupDirectory();
-    void mountBackupPartition();
     bool isRdiffAvailable();
 
     void backupIfNeeded();
@@ -71,19 +66,19 @@ class MainWindow : public KXmlGuiWindow
     void slotEditFilters();
     void slotBackupFinished(bool, QString);
 
-    void slotDeviceAdded(QString);
-    void slotDeviceRemoved(QString);
-    void slotDeviceAccessibilityChanged(bool,QString);
-    void slotBackupPartitionMounted(Solid::ErrorType error,QVariant message,QString udi);
+    void slotNewDeviceAttached();
+    void slotBackupDeviceAccessibilityChanged(bool);
+    void slotBackupDeviceSetupDone(bool, QString);
 
   private:
     Ui::MainWidgetBase* m_mainWidget;
     KSystemTrayIcon* m_trayIcon;
+
     BackupThread* m_backupThread;
     BackupRemoverThread* m_backupRemoverThread;
-    bool m_backupDiskPlugged;
+    BackupDevice* m_backupDevice;
+
     QString m_lastError;
-    QString m_mount;
 };
 
 #endif

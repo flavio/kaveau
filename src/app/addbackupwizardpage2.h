@@ -42,6 +42,7 @@ class AddBackupWizardPage2 : public QWizardPage
     QString destination() const;
     QString relativeDestination() const;
     QString deviceUDI() const;
+    QString mountPoint() const;
     bool eraseDestination() const;
 
   signals:

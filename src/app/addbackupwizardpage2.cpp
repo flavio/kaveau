@@ -175,6 +175,11 @@ QString AddBackupWizardPage2::relativeDestination() const
   return m_relative;
 }
 
+QString AddBackupWizardPage2::mountPoint() const
+{
+  return m_mount;
+}
+
 QString AddBackupWizardPage2::deviceUDI() const
 {
   return field("deviceUDI").toString();
