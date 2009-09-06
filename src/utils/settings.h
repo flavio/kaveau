@@ -19,18 +19,23 @@
  * 51 Franklin Steet, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-#ifndef _BACKUP_H_
-#define _BACKUP_H_
+#ifndef _BACKUPCONFIG_H_ 
+#define _BACKUPCONFIG_H_
 
 #include <QtCore/QDateTime>
+#include <QtCore/QString>
 #include <QtCore/QStringList>
 
+class KConfig;
+
 /*!
-  Class storing the backup settings
+  Class used for saving kaveau settings to disk
 */
-class Backup
+class Settings
 {
   public:
+    Settings();
+
     /*!
       Constructor
       \param source path of the directory to backup
@@ -39,11 +44,13 @@ class Backup
       \param excludeList list of items to exclude from the backup
       \param latestBackupTime latest backup time
     */
-    Backup( QString source, QString diskUdi, QString relativeDest,
+    Settings( QString source, QString diskUdi, QString relativeDest,
             QStringList excludeList,
             QDateTime lastBackupTime = QDateTime());
-    Backup();
-    ~Backup();
+    
+    ~Settings();
+    
+    static Settings* global();
 
     QString source() const;
     void setSource(const QString& source);
@@ -66,6 +73,8 @@ class Backup
     QDateTime lastBackupTime() const;
     void setLastBackupTime(const QDateTime&);
 
+    Settings & operator=(const Settings &other);
+    
   private:
     //! method used for calculating the final backup path, used when m_source or m_mount are changed
     void updateDest();
@@ -77,6 +86,12 @@ class Backup
     QString m_diskUdi;
     QStringList m_excludeList;
     QDateTime m_lastBackupTime;
+    
+    KConfig *m_config;
+
+    void clearConfigFile();
+    void loadConfigFile();
+    void saveConfigFile();
 };
 
 #endif
