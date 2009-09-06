@@ -25,7 +25,6 @@
 #include <kconfiggroup.h>
 #include <kglobal.h>
 
-#include "backup.h"
 #include "common.h"
 
 K_GLOBAL_STATIC (Settings, globalConfigManager)
@@ -112,7 +111,7 @@ Settings& Settings::operator=(const Settings& other)
     this->setSource(other.source());
     this->setMount(other.mount());
   }
-  
+
   return *this;
 }
 

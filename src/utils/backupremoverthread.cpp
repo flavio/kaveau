@@ -19,7 +19,6 @@
  */
 
 #include "backupremoverthread.h"
-#include "backup.h"
 #include "backupmanager.h"
 #include "settings.h"
 
