@@ -53,8 +53,6 @@ class MainWindow : public KXmlGuiWindow
     void updateDiskUsage(const QString&);
     void showGenericError(const QString& message, bool disableBackup = true);
 
-    bool isRdiffAvailable();
-
     void backupIfNeeded();
     void scheduleNextBackup(int);
 

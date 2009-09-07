@@ -83,7 +83,7 @@ MainWindow::MainWindow(QWidget *parent)
   m_backupRemoverThread = new BackupRemoverThread();
   m_backupRemoverThread->start();
 
-  if (!isRdiffAvailable()) {
+  if (!BackupManager::isBackupProgramAvailable()) {
     showGenericError(i18n("rdiff-backup is not installed"));
   } else if (m_backupDevice->isAvailable() && !m_backupDevice->isAccesible())
     m_backupDevice->setup();
@@ -260,6 +260,37 @@ void MainWindow::slotShowLog()
   dialog->show();
 }
 
+void MainWindow::showGenericError(const QString& message, bool disableBackup)
+{
+  m_mainWidget->stackedWidget->setCurrentIndex(GENERIC_ERROR_PAGE);
+  m_mainWidget->labelGenericError->setText(message);
+  m_mainWidget->btnBackup->setEnabled(!disableBackup);
+}
+
+void MainWindow::backupIfNeeded()
+{
+  if (!m_backupDevice->isAvailable()) {
+    m_mainWidget->labelNextBackup->setText(i18n("next time the backup disk will be plugged"));
+    return;
+  }
+
+  if (!m_backupDevice->isAccesible()) {
+    m_backupDevice->setup();
+    return;
+  }
+
+  QDateTime lastBackup = Settings::global()->lastBackupTime();
+  QDateTime now = QDateTime::currentDateTime();
+
+  if ((!lastBackup.isValid()) or (lastBackup.secsTo(now) > BACKUP_INTERVAL)) {
+    // perform the backup immediately
+    slotStartBackup();
+  } else {
+    // schedule the backup
+    scheduleNextBackup(BACKUP_INTERVAL - lastBackup.secsTo(now));
+  }
+}
+
 void MainWindow::slotStartBackup() {
   if ((!m_backupDevice->isAccesible()) || (m_backupThread->isRunning()))
     return;
@@ -310,6 +341,14 @@ void MainWindow::slotBackupFinished(bool ok, QString message)
   updateDiskUsage(Settings::global()->mount());
 }
 
+void MainWindow::scheduleNextBackup(int whithinSeconds)
+{
+  QTimer::singleShot( whithinSeconds*1000, this, SLOT( slotStartBackup()));
+
+  QDateTime nextRun = QDateTime::currentDateTime().addSecs(whithinSeconds);
+  m_mainWidget->labelNextBackup->setText(nextRun.toString("hh:mm"));
+}
+
 void MainWindow::slotNewDeviceAttached()
 {
   // we don't have a backup disk, maybe we can use this one
@@ -329,38 +368,6 @@ void MainWindow::slotBackupDeviceAccessibilityChanged(bool accessible)
   updateBackupView();
 }
 
-void MainWindow::backupIfNeeded()
-{
-  if (!m_backupDevice->isAvailable()) {
-    m_mainWidget->labelNextBackup->setText(i18n("next time the backup disk will be plugged"));
-    return;
-  }
-
-  if (!m_backupDevice->isAccesible()) {
-    m_backupDevice->setup();
-    return;
-  }
-
-  QDateTime lastBackup = Settings::global()->lastBackupTime();
-  QDateTime now = QDateTime::currentDateTime();
-
-  if ((!lastBackup.isValid()) or (lastBackup.secsTo(now) > BACKUP_INTERVAL)) {
-    // perform the backup immediately
-    slotStartBackup();
-  } else {
-    // schedule the backup
-    scheduleNextBackup(BACKUP_INTERVAL - lastBackup.secsTo(now));
-  }
-}
-
-void MainWindow::scheduleNextBackup(int whithinSeconds)
-{
-  QTimer::singleShot( whithinSeconds*1000, this, SLOT( slotStartBackup()));
-
-  QDateTime nextRun = QDateTime::currentDateTime().addSecs(whithinSeconds);
-  m_mainWidget->labelNextBackup->setText(nextRun.toString("hh:mm"));
-}
-
 void MainWindow::slotBackupDeviceSetupDone(bool ok, QString message)
 {
   if (!ok)
@@ -371,16 +378,3 @@ void MainWindow::slotBackupDeviceSetupDone(bool ok, QString message)
   updateBackupView();
   backupIfNeeded();
 }
-
-bool MainWindow::isRdiffAvailable()
-{
-  return BackupManager::isBackupProgramAvailable();
-}
-
-void MainWindow::showGenericError(const QString& message, bool disableBackup)
-{
-  m_mainWidget->stackedWidget->setCurrentIndex(GENERIC_ERROR_PAGE);
-  m_mainWidget->labelGenericError->setText(message);
-  m_mainWidget->btnBackup->setEnabled(!disableBackup);
-}
-
