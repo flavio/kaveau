@@ -59,7 +59,6 @@ class Settings
     void setDiskUdi(const QString& uid);
 
     QString dest() const;
-    void setDest(const QString& dest);
 
     QString mount() const;
     void setMount(const QString& mount);

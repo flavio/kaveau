@@ -46,7 +46,6 @@
 #include "backupdevice.h"
 #include "backupmanager.h"
 #include "backupremoverthread.h"
-#include "backupthread.h"
 #include "settings.h"
 
 #include <kdebug.h>
@@ -77,16 +76,18 @@ MainWindow::MainWindow(QWidget *parent)
   setupTrayIcon();
   setupConnections();
 
-  m_backupThread = new BackupThread();
-  connect (m_backupThread, SIGNAL(backupFinished(bool,QString)), this, SLOT(slotBackupFinished(bool, QString)));
+  m_backupManager = new BackupManager(this);
+  connect (m_backupManager, SIGNAL(backupFinished(bool,QString)), this, SLOT(slotBackupFinished(bool,QString)));
 
   m_backupRemoverThread = new BackupRemoverThread();
   m_backupRemoverThread->start();
 
   if (!BackupManager::isBackupProgramAvailable()) {
     showGenericError(i18n("rdiff-backup is not installed"));
-  } else if (m_backupDevice->isAvailable() && !m_backupDevice->isAccesible())
+  } else if (m_backupDevice->isAvailable() && !m_backupDevice->isAccesible()) {
     m_backupDevice->setup();
+  } else if (m_backupDevice->isAvailable() && m_backupDevice->isAccesible())
+    backupIfNeeded();
 
   updateBackupView();
   updateDiskUsage("");
@@ -94,7 +95,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-  delete m_backupThread;
 }
 
 void MainWindow::setupActions()
@@ -166,9 +166,9 @@ void MainWindow::slotEditFilters()
      hide();
      event->ignore();
    } else {
-     if (m_backupThread->isRunning()) {
+     if (m_backupManager->isBackupRunning()) {
        if (KMessageBox::questionYesNo(this, i18n("A backup is in progress, are you sure you want to quit kaveau?!"), i18n("WARNING - backup running")) ==   KMessageBox::Yes) {
-        m_backupThread->terminate();
+        m_backupManager->terminateBackup();
         if (m_backupRemoverThread->isRunning())
           m_backupRemoverThread->terminate();
       } else {
@@ -269,6 +269,7 @@ void MainWindow::showGenericError(const QString& message, bool disableBackup)
 
 void MainWindow::backupIfNeeded()
 {
+  kDebug() << "cacca";
   if (!m_backupDevice->isAvailable()) {
     m_mainWidget->labelNextBackup->setText(i18n("next time the backup disk will be plugged"));
     return;
@@ -278,7 +279,7 @@ void MainWindow::backupIfNeeded()
     m_backupDevice->setup();
     return;
   }
-
+kDebug() << "hello world";
   QDateTime lastBackup = Settings::global()->lastBackupTime();
   QDateTime now = QDateTime::currentDateTime();
 
@@ -292,14 +293,14 @@ void MainWindow::backupIfNeeded()
 }
 
 void MainWindow::slotStartBackup() {
-  if ((!m_backupDevice->isAccesible()) || (m_backupThread->isRunning()))
+  if ((!m_backupDevice->isAccesible()) || (m_backupManager->isBackupRunning()))
     return;
 
   m_mainWidget->stackedWidget->setCurrentIndex(DOING_BACKUP_PAGE);
   m_mainWidget->labelNextBackup->setText("-");
   m_mainWidget->btnBackup->setEnabled(false);
 
-  m_backupThread->start();
+  m_backupManager->doBackup();
 
   KNotification* notification= new KNotification ( "backupStarted", this );
   notification->setText( i18n("Backup started"));

@@ -6,7 +6,6 @@ set(kaveau_utils_SRC
     common.cpp
     settings.cpp
     processlistener.cpp
-    backupthread.cpp
     backupmanager.cpp
     backupremoverthread.cpp
     backupdevice.cpp

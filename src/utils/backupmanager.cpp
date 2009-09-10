@@ -34,44 +34,46 @@
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 
-BackupManager::BackupManager(Settings* settings, QObject* parent)
-    : QObject(parent),
-      m_settings (settings)
+BackupManager::BackupManager(QObject* parent)
+    : QObject(parent)
 {
+  m_backupRunning = false;
 }
 
-bool BackupManager::doBackup()
+void BackupManager::doBackup()
 {
-  QString backupTimestamp = QDateTime::currentDateTime().toString(DATE_FORMAT);
-  bool updateCurrent = false;
-  m_error.clear();
+  Settings* settings = Settings::global();
+  m_backupRunning = true;
+  m_updateCurrent = false;
+  QStringList args;
+  QString program = "rsync";
 
-  QString current = QFile::encodeName(KShell::quoteArg(QDir::cleanPath(m_settings->dest() + QDir::separator() + "current")));
-  QString destination = QFile::encodeName(KShell::quoteArg(QDir::cleanPath(m_settings->dest()+ QDir::separator() + backupTimestamp)));
+  m_backupTimestamp = QDateTime::currentDateTime().toString(DATE_FORMAT);
+  m_destination = QFile::encodeName(KShell::quoteArg(QDir::cleanPath(settings->dest()+ QDir::separator() + m_backupTimestamp)));
+  QString current = QFile::encodeName(KShell::quoteArg(QDir::cleanPath(settings->dest() + QDir::separator() + "current")));
 
-  KProcess proc;
-  ProcessListener listener(&proc);
-  proc << "rsync";
-  proc.setOutputChannelMode(KProcess::SeparateChannels);
+  m_backupProcess = new KProcess(this);
+  ProcessListener listener(m_backupProcess);
+  m_backupProcess->setOutputChannelMode(KProcess::SeparateChannels);
 
   // Adds include and exclude
-  foreach (QString item, m_settings->excludeList()) {
-    proc << "--exclude";
-    proc << QFile::encodeName(KShell::quoteArg(item));
+  foreach (QString item, settings->excludeList()) {
+    args << "--exclude";
+    args << QFile::encodeName(KShell::quoteArg(item));
   }
 
   // Common options used by default
-  proc << "-xaP";
-  proc << "-v"; //TODO: remove
-  proc << "--delete";
-  proc << "--delete-excluded";
+  args << "-xaP";
+  args << "-v"; //TODO: remove
+  args << "--delete";
+  args << "--delete-excluded";
 
   // Adds source and dest
 
   // Ensure the destination directory exists
-  QDir destDir(m_settings->dest());
+  QDir destDir(settings->dest());
   if (!destDir.exists()) {
-    destDir.mkpath(m_settings->dest());
+    destDir.mkpath(settings->dest());
   }
 
   QFileInfo currLinkInfo (current);
@@ -79,94 +81,147 @@ bool BackupManager::doBackup()
     // it's a directory
     kDebug() << current << "is not a symbolic link, going to delete it!";
     if (!KIO::NetAccess::del(KUrl(current), 0)) {
-      m_error = i18n("Error during deletiong of current directory.");
-      kDebug() << m_error;
-      return false;
+      emit backupFinished(false, i18n("Error during deletiong of current directory."));
+      return;
     }
   } else if (currLinkInfo.exists() && currLinkInfo.isSymLink()) {
     // it's a non-broken symlink
-    proc << QString("--link-dest=%1").arg(current);
-    updateCurrent = true;
+    args << QString("--link-dest=%1").arg(current);
+    m_updateCurrent = true;
   } else if (!currLinkInfo.exists() && currLinkInfo.isSymLink()) {
     // it's a broken symlink
 
     // remove the broken symlink
     if (!QFile::remove(current)) {
-      m_error = i18n("current is a broken symlink, error while trying to remove it.");
-      kDebug() << m_error;
-      return false;
+      emit backupFinished(false, i18n("current is a broken symlink, error while trying to remove it."));
+      return;
     }
 
     QString latestBackup = findLatestBackup();
     if (!latestBackup.isEmpty()) {
-      QDir::setCurrent(m_settings->dest());
+      QDir::setCurrent(settings->dest());
       // create a symlink called current pointing to the latest backup
 
       if (QFile::link(latestBackup, "current")) {
-        proc << QString("--link-dest=%1").arg(current);
-        updateCurrent = true;
+        args << QString("--link-dest=%1").arg(current);
+        m_updateCurrent = true;
       }
     }
   }
 
-  proc << QFile::encodeName(KShell::quoteArg(m_settings->source()));
-  proc << QFile::encodeName(KShell::quoteArg(destination));
+  args << QFile::encodeName(KShell::quoteArg(settings->source()));
+  args << QFile::encodeName(KShell::quoteArg(m_destination));
 
-  kDebug() << "Starting process: " << proc.program().join(" ") << endl;
+  m_backupProcess->setProgram(program, args);
+  kDebug() << "Starting m_backupProcessess: " << m_backupProcess->program().join(" ") << endl;
 
-  // Starts the process
-  if ( proc.execute() != 0 ) {
-    m_error = i18n("Error starting rsync\n%1").arg(listener.stdErr().join("\n"));
-    kDebug() << m_error;
-    return false;
-  } else {
-    kDebug() << "rsync process completed";
-    if (updateCurrent) {
-      kDebug() << "going to delete current" << current;
-      QFile currLink (current);
-      if (! currLink.remove()) {
-        m_error = i18n("Error during deletion of current directory.");
-        kDebug() << m_error;
-        return false;
-      }
-    }
+  // Starts the m_backupProcessess
+  connect (m_backupProcess, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(slotBackupFinished(int,QProcess::ExitStatus)));
+  m_backupProcess->start();
 
-    kDebug() << "going to create current";
-    QDir::setCurrent(m_settings->dest());
-    // create a symlink called current pointing to the latest backup
-    kDebug() << "timestamp" << backupTimestamp;
-    if (!QFile::link(backupTimestamp, "current")) {
-      m_error = i18n("Error during symbolic link creation");
-      kDebug() << m_error;
 
-      // reset current directory, otherwise it will be impossible to umount the
-      // external device
-      QDir::setCurrent(QDir::home().path());
+//  if ( m_backupProcess.execute() != 0 ) {
+//    m_error = i18n("Error starting rsync\n%1").arg(listener.stdErr().join("\n"));
+//    kDebug() << m_error;
+//    return false;
+//  } else {
+//    kDebug() << "rsync m_backupProcessess completed";
+//    if (updateCurrent) {
+//      kDebug() << "going to delete current" << current;
+//      QFile currLink (current);
+//      if (! currLink.remove()) {
+//        m_error = i18n("Error during deletion of current directory.");
+//        kDebug() << m_error;
+//        return false;
+//      }
+//    }
+//
+//    kDebug() << "going to create current";
+//    QDir::setCurrent(settings->dest());
+//    // create a symlink called current pointing to the latest backup
+//    kDebug() << "timestamp" << backupTimestamp;
+//    if (!QFile::link(backupTimestamp, "current")) {
+//      m_error = i18n("Error during symbolic link creation");
+//      kDebug() << m_error;
+//
+//      // reset current directory, otherwise it will be impossible to umount the
+//      // external device
+//      QDir::setCurrent(QDir::home().path());
+//
+//      return false;
+//    }
+//  }
+//
+//  // reset current directory, otherwise it will be impossible to umount the
+//  // external device
+//  QDir::setCurrent(QDir::home().path());
+//  return true;
+}
 
-      return false;
+void BackupManager::slotBackupFinished(int exitCode, QProcess::ExitStatus exitStatus)
+{
+  Settings* settings = Settings::global();
+  m_backupRunning = false;
+  kDebug() << "exitCode ==" << exitCode;
+  kDebug() << "output ==" << m_backupProcess->readAllStandardOutput();
+  kDebug() << "error ==" << m_backupProcess->readAllStandardError();
+
+  if (exitCode != 0) {
+    emit backupFinished( false, m_backupProcess->errorString());
+    return;
+  } else if (exitStatus == QProcess::CrashExit) {
+    emit backupFinished( false, i18n("The m_backupProcessess crashed"));
+    return;
+  }
+
+  QString current = QFile::encodeName(KShell::quoteArg(QDir::cleanPath(settings->dest() + QDir::separator() + "current")));
+
+  kDebug() << "rsync m_backupProcessess completed";
+  if (m_updateCurrent) {
+    kDebug() << "going to delete current" << current;
+    QFile currLink (current);
+    if (! currLink.remove()) {
+      emit backupFinished( false, i18n("Error during deletion of current directory."));
+      return;
     }
   }
+
+  QDir::setCurrent(settings->dest());
+
+  // create a symlink called current pointing to the latest backup
+  if (!QFile::link(m_backupTimestamp, "current"))
+    emit backupFinished(false, i18n("Error during symbolic link creation"));
+  else
+    emit backupFinished(true, "");
 
   // reset current directory, otherwise it will be impossible to umount the
   // external device
   QDir::setCurrent(QDir::home().path());
-  return true;
+
+  delete m_backupProcess;
+  m_backupProcess = 0;
 }
 
-QString BackupManager::error() const
+bool BackupManager::isBackupRunning() const
 {
-  return m_error;
+  return m_backupRunning;
+}
+
+void BackupManager::terminateBackup()
+{
+  if (m_backupProcess)
+    m_backupProcess->terminate();
 }
 
 bool BackupManager::isBackupProgramAvailable()
 {
-  KProcess proc;
-  proc << "rsync";
-  proc << "--version";
+  KProcess m_backupProcess;
+  m_backupProcess << "rsync";
+  m_backupProcess << "--version";
 
-  if ( proc.execute() != 0 ) {
+  if ( m_backupProcess.execute() != 0 ) {
     return false;
-  } else if (proc.exitCode() == 0)
+  } else if (m_backupProcess.exitCode() == 0)
     return true;
   else
     return false;
@@ -174,8 +229,9 @@ bool BackupManager::isBackupProgramAvailable()
 
 QString BackupManager::findLatestBackup() const
 {
+  Settings* settings = Settings::global();
   QList<QDateTime> dates;
-  QDir backupRoot (m_settings->dest());
+  QDir backupRoot (settings->dest());
   QStringList backups = backupRoot.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks);
 
   foreach (QString backup, backups)
@@ -191,13 +247,14 @@ QString BackupManager::findLatestBackup() const
 
 void BackupManager::purgeOldBackups()
 {
-  QDir backupRoot (m_settings->dest());
+  Settings* settings = Settings::global();
+  QDir backupRoot (settings->dest());
   QStringList backups = backupRoot.entryList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks);
 
   QStringList directoriesToRemove = findBackupDirectoriesToDelete(backups);
 
   foreach(QString dir, directoriesToRemove) {
-    QString dirToRemove = QDir::cleanPath(m_settings->dest() + QDir::separator() + dir);
+    QString dirToRemove = QDir::cleanPath(settings->dest() + QDir::separator() + dir);
     if (QFile::exists(dirToRemove)) {
       kDebug() << "Going to remove old backup directory:" << dirToRemove;
       KIO::NetAccess::del(KUrl(dirToRemove), 0);

@@ -28,7 +28,7 @@ namespace Ui {
 }
 
 class BackupDevice;
-class BackupThread;
+class BackupManager;
 class BackupRemoverThread;
 class KSystemTrayIcon;
 class QCloseEvent;
@@ -72,7 +72,7 @@ class MainWindow : public KXmlGuiWindow
     Ui::MainWidgetBase* m_mainWidget;
     KSystemTrayIcon* m_trayIcon;
 
-    BackupThread* m_backupThread;
+    BackupManager* m_backupManager;
     BackupRemoverThread* m_backupRemoverThread;
     BackupDevice* m_backupDevice;
 

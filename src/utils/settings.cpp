@@ -150,11 +150,6 @@ QString Settings::dest() const
   return m_dest;
 }
 
-void Settings::setDest(const QString& dest)
-{
-  m_dest = dest;
-}
-
 QString Settings::relativeDest() const
 {
   return m_relativeDest;

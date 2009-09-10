@@ -24,7 +24,7 @@
 
 void BackupRemoverThread::run()
 {
-  BackupManager manager (Settings::global());
+  BackupManager manager;
   manager.purgeOldBackups();
 }
 

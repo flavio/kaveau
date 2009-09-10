@@ -73,6 +73,8 @@ bool BackupDevice::isAccesible()
     QFileInfo info (storageAccess->filePath());
     if (!info.isWritable())
       return false;
+
+    settings->setMount(storageAccess->filePath());
   }
 
   return accesible;
@@ -96,9 +98,8 @@ void BackupDevice::setup()
     return;
   }
 
-  connect(storageAccess, SIGNAL(setupDone(Solid::ErrorType,QVariant,QString)), this, SLOT(slotBackupPartitionMounted(Solid::ErrorType,QVariant,QString)));
+  connect(storageAccess, SIGNAL(setupDone(Solid::ErrorType,QVariant,QString)), this, SLOT(slotDiskMounted(Solid::ErrorType,QVariant,QString)));
   storageAccess->setup();
-
 }
 
 void BackupDevice::slotDiskMounted(Solid::ErrorType error,QVariant message,QString udi)
