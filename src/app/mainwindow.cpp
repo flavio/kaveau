@@ -51,13 +51,6 @@
 
 #define BACKUP_INTERVAL 3600 // backup every hour
 
-// stacked widget pages
-#define CONFIGURE_PAGE 0
-#define DOING_BACKUP_PAGE 1
-#define SUCCESS_PAGE 2
-#define FAILURE_PAGE 3
-#define GENERIC_ERROR_PAGE 4
-
 MainWindow::MainWindow(QWidget *parent)
   : KXmlGuiWindow(parent)
 {
@@ -192,7 +185,7 @@ void MainWindow::updateBackupView()
   Settings* settings = Settings::global();
 
   if (settings == 0) {
-    m_mainWidget->stackedWidget->setCurrentIndex(CONFIGURE_PAGE);
+    m_mainWidget->stackedWidget->setCurrentIndex(ConfigPage);
     m_mainWidget->btnBackup->setEnabled(false);
     m_mainWidget->btnFilter->setEnabled(false);
     return;
@@ -264,7 +257,7 @@ void MainWindow::slotShowLog()
 
 void MainWindow::showGenericError(const QString& message, bool disableBackup)
 {
-  m_mainWidget->stackedWidget->setCurrentIndex(GENERIC_ERROR_PAGE);
+  m_mainWidget->stackedWidget->setCurrentIndex(GenericErrorPage);
   m_mainWidget->labelGenericError->setText(message);
   m_mainWidget->btnBackup->setEnabled(!disableBackup);
 }
@@ -295,7 +288,7 @@ void MainWindow::slotStartBackup() {
   if ((!m_backupDevice->isAccesible()) || (m_backupManager->isBackupRunning()))
     return;
 
-  m_mainWidget->stackedWidget->setCurrentIndex(DOING_BACKUP_PAGE);
+  m_mainWidget->stackedWidget->setCurrentIndex(DoingBackupPage);
   m_mainWidget->labelNextBackup->setText("-");
   m_mainWidget->btnBackup->setEnabled(false);
 
@@ -313,7 +306,7 @@ void MainWindow::slotBackupFinished(bool ok, QString message)
 
   if (ok) {
     kDebug() << "backup completed successfully";
-    m_mainWidget->stackedWidget->setCurrentIndex(SUCCESS_PAGE);
+    m_mainWidget->stackedWidget->setCurrentIndex(SuccessPage);
 
     notification= new KNotification ( "backupSuccess", this );
     notification->setText( i18n("Backup successfully completed"));
@@ -326,7 +319,7 @@ void MainWindow::slotBackupFinished(bool ok, QString message)
     kDebug() << "error during backup:" << message;
     m_lastError = message;
 
-    m_mainWidget->stackedWidget->setCurrentIndex(FAILURE_PAGE);
+    m_mainWidget->stackedWidget->setCurrentIndex(FailurePage);
 
     notification= new KNotification ( "backupError", this );
     notification->setText( i18n("Backup failed"));
@@ -371,7 +364,7 @@ void MainWindow::slotOldBackupDirectoriesRemoved(bool ok, QString message)
 {
   if (!ok) {
     m_lastError = message;
-    m_mainWidget->stackedWidget->setCurrentIndex(FAILURE_PAGE);
+    m_mainWidget->stackedWidget->setCurrentIndex(FailurePage);
   }
 
   // schedule delete operation

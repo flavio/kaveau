@@ -70,6 +70,9 @@ class MainWindow : public KXmlGuiWindow
     void slotBackupDeviceSetupDone(bool, QString);
 
   private:
+    enum StackedWidgetPages {NothingPage, ConfigPage, DoingBackupPage,
+                             SuccessPage, FailurePage, GenericErrorPage};
+
     Ui::MainWidgetBase* m_mainWidget;
     KSystemTrayIcon* m_trayIcon;
 
