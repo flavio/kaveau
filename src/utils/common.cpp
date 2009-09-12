@@ -131,7 +131,7 @@ const QMap< int, QList<QDateTime> > groupDateTime(QList<QDateTime>& times, DATET
 const QStringList findOldBackups(QList<QDateTime>& dates)
 {
   qSort(dates.begin(), dates.end());
-  if (dates.size() > 1) {
+  if (!dates.isEmpty()) {
     dates.pop_back();
   }
 

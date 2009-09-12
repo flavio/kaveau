@@ -79,14 +79,13 @@ void TestCommon::testFindBackupDirectoriesToDelete_data()
   output.clear();
   QTest::newRow("emtpy list") << input << output;
 
-
   // 24h backups
   input.clear();
   output.clear();
   dateTime = now;
   dateTime.setTime(QTime(now.time().hour(), 10, 00));
 
-  for (int i = 0; i < 24; i++) {
+  for (int i = 0; i < 5; i++) {
     QDateTime time_to_keep = dateTime.addSecs(-i*3600); // i hour(s) ago
     QDateTime time_to_delete = time_to_keep.addSecs(-60); // i hour(s) and 1m ago
     input << time_to_keep.toString(DATE_FORMAT);
@@ -100,7 +99,7 @@ void TestCommon::testFindBackupDirectoriesToDelete_data()
   dateTime = now;
   dateTime.setTime(QTime(now.time().hour(), 10, 00));
 
-  for (int i = 2; i < dateTime.date().daysInMonth(); i++) {
+  for (int i = 2; i < 5; i++) {
     QDateTime time_to_keep = dateTime.addDays(-i); // i days ago
     QDateTime time_to_delete = time_to_keep.addSecs(-60); // i day(s) and 1m ago
     input << time_to_keep.toString(DATE_FORMAT);
@@ -115,7 +114,7 @@ void TestCommon::testFindBackupDirectoriesToDelete_data()
   dateTime.setTime(QTime(now.time().hour(), 10, 00));
   dateTime = dateTime.addMonths(-2); // 2 months ago
 
-  for (int i = 0; i < 10; i++) {
+  for (int i = 1; i < 5; i++) {
     QDateTime time_to_keep = dateTime.addDays(-i*7); // i week(s) ago
     QDateTime time_to_delete = time_to_keep.addSecs(-60); // i week(s) and 1m ago
     input << time_to_keep.toString(DATE_FORMAT);
@@ -124,6 +123,30 @@ void TestCommon::testFindBackupDirectoriesToDelete_data()
   }
 
   QTest::newRow("last 24 hours + last month + some weeks backups") << input << output;
+
+  // nothing to delete
+  input.clear();
+  output.clear();
+
+  dateTime = now;
+  dateTime.setTime(QTime(now.time().hour(), 10, 00));
+
+  for (int i = 0; i < 5; i++) {
+    QDateTime time_to_keep = dateTime.addSecs(-i*3600); // i hour(s) ago
+    input << time_to_keep.toString(DATE_FORMAT);
+  }
+
+  for (int i = 2; i < 5; i++) {
+    QDateTime time_to_keep = dateTime.addDays(-i); // i days ago
+    input << time_to_keep.toString(DATE_FORMAT);
+  }
+
+  for (int i = 1; i < 5; i++) {
+    QDateTime time_to_keep = dateTime.addDays(-i*7); // i week(s) ago
+    input << time_to_keep.toString(DATE_FORMAT);
+  }
+
+  QTest::newRow("nothing to delete") << input << output;
 }
 
 
