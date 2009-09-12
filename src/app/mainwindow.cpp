@@ -47,7 +47,6 @@
 #include "common.h"
 #include "backupdevice.h"
 #include "backupmanager.h"
-#include "backupremoverthread.h"
 #include "settings.h"
 
 #define BACKUP_INTERVAL 3600 // backup every hour
@@ -71,16 +70,11 @@ MainWindow::MainWindow(QWidget *parent)
   m_mainWidget->labelDiskIcon->setPixmap(KIcon("drive-removable-media").pixmap(128,128));
 
   m_backupDevice = new BackupDevice(this);
+  m_backupManager = new BackupManager(this);
 
   setupActions();
   setupTrayIcon();
   setupConnections();
-
-  m_backupManager = new BackupManager(this);
-  connect (m_backupManager, SIGNAL(backupFinished(bool,QString)), this, SLOT(slotBackupFinished(bool,QString)));
-
-  m_backupRemoverThread = new BackupRemoverThread();
-  //m_backupRemoverThread->start();
 
   if (!BackupManager::isBackupProgramAvailable()) {
     showGenericError(i18n("rdiff-backup is not installed"));
@@ -113,6 +107,8 @@ void MainWindow::setupTrayIcon()
 
 void MainWindow::setupConnections()
 {
+  connect (m_backupManager, SIGNAL(backupFinished(bool,QString)), this, SLOT(slotBackupFinished(bool,QString)));
+
   connect (m_mainWidget->btnConfig, SIGNAL(clicked()), this, SLOT(slotStartBackupWizard()));
   connect (m_mainWidget->btnBackup, SIGNAL(clicked()), this, SLOT(slotStartBackup()));
   connect (m_mainWidget->btnFilter, SIGNAL(clicked()), this, SLOT(slotEditFilters()));
@@ -120,10 +116,10 @@ void MainWindow::setupConnections()
 
   connect (m_mainWidget->btnPurge, SIGNAL(clicked()), this, SLOT(slotPurgeOldBackups()));
 
-
   connect (m_backupDevice, SIGNAL(accessibilityChanged(bool)), this, SLOT(slotBackupDeviceAccessibilityChanged(bool)));
   connect (m_backupDevice, SIGNAL(newDeviceAttached()), this, SLOT(slotNewDeviceAttached()));
   connect (m_backupDevice, SIGNAL(setupDone(bool,QString)), this, SLOT(slotBackupDeviceSetupDone(bool,QString)));
+  connect (m_backupDevice, SIGNAL(backupDirectoriesRemoved(bool,QString)), this, SLOT(slotOldBackupDirectoriesRemoved(bool,QString)));
 }
 
 void MainWindow::slotStartBackupWizard()
@@ -188,13 +184,6 @@ bool MainWindow::queryClose()
     }
   } else {
     return true;
-  }
-}
-
-void MainWindow::slotPurgeOldBackups()
-{
-  if (!m_backupRemoverThread->isRunning()) {
-    m_backupRemoverThread->start();
   }
 }
 
@@ -285,9 +274,7 @@ void MainWindow::backupIfNeeded()
   if (!m_backupDevice->isAvailable()) {
     m_mainWidget->labelNextBackup->setText(i18n("next time the backup disk will be plugged"));
     return;
-  }
-
-  if (!m_backupDevice->isAccesible()) {
+  } else if (!m_backupDevice->isAccesible()) {
     m_backupDevice->setup();
     return;
   }
@@ -362,12 +349,47 @@ void MainWindow::scheduleNextBackup(int whithinSeconds)
   m_mainWidget->labelNextBackup->setText(nextRun.toString("hh:mm"));
 }
 
+void MainWindow::slotPurgeOldBackups()
+{
+  if (!m_backupDevice->isAvailable()) {
+    scheduleNextPurgeOperation ( BACKUP_INTERVAL*3);
+    return;
+  }
+  else if (!m_backupDevice->isAccesible()) {
+    m_backupDevice->setup();
+    return;
+  }
+
+  QStringList oldBackups = m_backupManager->oldBackups();
+  if (!oldBackups.isEmpty())
+    m_backupDevice->removeBackupDirectories(oldBackups);
+  else
+    slotOldBackupDirectoriesRemoved(true, "");
+}
+
+void MainWindow::slotOldBackupDirectoriesRemoved(bool ok, QString message)
+{
+  if (!ok) {
+    m_lastError = message;
+    m_mainWidget->stackedWidget->setCurrentIndex(FAILURE_PAGE);
+  }
+
+  // schedule delete operation
+  scheduleNextPurgeOperation ( BACKUP_INTERVAL*3);
+  updateDiskUsage(Settings::global()->mount());
+}
+
+void MainWindow::scheduleNextPurgeOperation(int whithinSeconds)
+{
+  QTimer::singleShot(whithinSeconds * 1000, this, SLOT( slotPurgeOldBackups()));
+}
+
 void MainWindow::slotNewDeviceAttached()
 {
   // we don't have a backup disk, maybe we can use this one
   KNotification *notify = new KNotification( "storageDeviceAttached", parentWidget() );
   notify->setText( QString( "An external storage device has been attached." ) );
-  notify->setActions( i18n( "Use it with kaveau" ).split( ',' ) );
+  notify->setActions( i18n( "Use as backup device" ).split( ',' ) );
   connect( notify, SIGNAL( action1Activated() ), this , SLOT( slotStartBackupWizard()));
   notify->sendEvent();
   QTimer::singleShot( 10*1000, notify, SLOT( close() ) );
@@ -390,4 +412,5 @@ void MainWindow::slotBackupDeviceSetupDone(bool ok, QString message)
 
   updateBackupView();
   backupIfNeeded();
+  slotPurgeOldBackups();
 }

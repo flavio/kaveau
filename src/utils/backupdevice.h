@@ -26,6 +26,8 @@
 
 #include <solid/solidnamespace.h>
 
+class KJob;
+
 /*!
   Class used for interacting with backup devices
 */
@@ -48,11 +50,15 @@ class BackupDevice : public QObject
     //! creates the directory where the back ups will be stored
     bool createBackupDirectory();
 
+    //! remove a backup directory
+    void removeBackupDirectories(QStringList&);
+
   private slots:
     void slotDeviceAdded(QString);
     void slotDeviceRemoved(QString);
     void slotDiskMounted(Solid::ErrorType error,QVariant message,QString udi);
     void slotDeviceAccessibilityChanged(bool,QString);
+    void slotBackupDirectoriesRemoved(KJob*);
 
   signals:
     /*!
@@ -74,18 +80,12 @@ class BackupDevice : public QObject
     */
     void accessibilityChanged(bool accessible);
 
-
-//   private slots:
-//     void slotPurgeOldBackups();
-//     void slotStartBackupWizard();
-//     void slotStartBackup();
-//     void slotShowLog();
-//     void slotBackupFinished(bool, QString);
-//
-//     void slotDeviceAdded(QString);
-//     void slotDeviceRemoved(QString);
-//     void slotDeviceAccessibilityChanged(bool,QString);
-//     void slotBackupPartitionMounted(Solid::ErrorType error,QVariant message,QString udi);
+    /*!
+      Signal emitted when the old backup directories have been removed.
+      \param ok is set to false if an error occurred during the operation
+      \param message contains the error message
+    */
+    void backupDirectoriesRemoved(bool ok, QString message);
 };
 
 #endif // BACKUPDEVICE_H

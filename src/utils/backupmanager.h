@@ -37,8 +37,8 @@ class BackupManager : public QObject
     //! performs the backup
     void doBackup();
 
-    //! performs the backup
-    void purgeOldBackups();
+    //! returns a list of the obsolete backups
+    QStringList oldBackups() const;
 
     //! return a string descripting the error message
     bool isBackupRunning() const;

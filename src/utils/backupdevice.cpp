@@ -22,10 +22,13 @@
 #include "settings.h"
 
 #include <klocale.h>
+#include <kio/deletejob.h>
+#include <kurl.h>
 
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
+#include <QtCore/QList>
 
 //solid specific includes
 #include <solid/devicenotifier.h>
@@ -173,3 +176,27 @@ bool BackupDevice::createBackupDirectory()
   return dir.mkpath(settings->dest());
 }
 
+void BackupDevice::removeBackupDirectories(QStringList& dirs)
+{
+  Settings* settings = Settings::global();
+  KUrl::List directoriesToRemove;
+
+  foreach(QString dir, dirs) {
+    QDir dirToRemove;
+    QString path = dirToRemove.cleanPath(settings->dest() + QDir::separator() + dir );
+    if (QFile::exists(path)) {
+      directoriesToRemove << KUrl(path);
+    }
+  }
+
+  KIO::DeleteJob* deleteJob = KIO::del(directoriesToRemove);
+  connect (deleteJob, SIGNAL(finished(KJob*)), this, SLOT( slotBackupDirectoriesRemoved(KJob*)));
+}
+
+void BackupDevice::slotBackupDirectoriesRemoved(KJob* job)
+{
+  if (job->error())
+    emit backupDirectoriesRemoved(false, job->errorString());
+  else
+    emit backupDirectoriesRemoved(true, "");
+}

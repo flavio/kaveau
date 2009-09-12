@@ -29,7 +29,6 @@ namespace Ui {
 
 class BackupDevice;
 class BackupManager;
-class BackupRemoverThread;
 class KSystemTrayIcon;
 class QCloseEvent;
 
@@ -55,6 +54,7 @@ class MainWindow : public KXmlGuiWindow
 
     void backupIfNeeded();
     void scheduleNextBackup(int);
+    void scheduleNextPurgeOperation(int);
 
   private slots:
     void slotPurgeOldBackups();
@@ -63,7 +63,7 @@ class MainWindow : public KXmlGuiWindow
     void slotShowLog();
     void slotEditFilters();
     void slotBackupFinished(bool, QString);
-//    void slotExit();
+    void slotOldBackupDirectoriesRemoved(bool, QString);
 
     void slotNewDeviceAttached();
     void slotBackupDeviceAccessibilityChanged(bool);
@@ -74,7 +74,6 @@ class MainWindow : public KXmlGuiWindow
     KSystemTrayIcon* m_trayIcon;
 
     BackupManager* m_backupManager;
-    BackupRemoverThread* m_backupRemoverThread;
     BackupDevice* m_backupDevice;
 
     QString m_lastError;
