@@ -297,7 +297,7 @@
                  <number>0</number>
                 </property>
                 <property name="value">
-                 <number>217702</number>
+                 <number>225861</number>
                 </property>
                </widget>
               </item>
@@ -495,13 +495,6 @@
       <widget class="QPushButton" name="btnFilter">
        <property name="text">
         <string>Filter</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="btnPurge">
-       <property name="text">
-        <string>Purge</string>
        </property>
       </widget>
      </item>

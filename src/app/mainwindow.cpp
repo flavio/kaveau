@@ -107,8 +107,6 @@ void MainWindow::setupConnections()
   connect (m_mainWidget->btnFilter, SIGNAL(clicked()), this, SLOT(slotEditFilters()));
   connect (m_mainWidget->btnDetails, SIGNAL(clicked()), this, SLOT(slotShowLog()));
 
-  connect (m_mainWidget->btnPurge, SIGNAL(clicked()), this, SLOT(slotPurgeOldBackups()));
-
   connect (m_backupDevice, SIGNAL(accessibilityChanged(bool)), this, SLOT(slotBackupDeviceAccessibilityChanged(bool)));
   connect (m_backupDevice, SIGNAL(newDeviceAttached()), this, SLOT(slotNewDeviceAttached()));
   connect (m_backupDevice, SIGNAL(setupDone(bool,QString)), this, SLOT(slotBackupDeviceSetupDone(bool,QString)));
