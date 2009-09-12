@@ -24,7 +24,9 @@
 #include <kaction.h>
 #include <klocale.h>
 #include <kactioncollection.h>
+#include <kdebug.h>
 #include <kdiskfreespaceinfo.h>
+#include <kguiitem.h>
 #include <kiconloader.h>
 #include <kio/netaccess.h>
 #include <kmessagebox.h>
@@ -47,8 +49,6 @@
 #include "backupmanager.h"
 #include "backupremoverthread.h"
 #include "settings.h"
-
-#include <kdebug.h>
 
 #define BACKUP_INTERVAL 3600 // backup every hour
 
@@ -80,7 +80,7 @@ MainWindow::MainWindow(QWidget *parent)
   connect (m_backupManager, SIGNAL(backupFinished(bool,QString)), this, SLOT(slotBackupFinished(bool,QString)));
 
   m_backupRemoverThread = new BackupRemoverThread();
-  m_backupRemoverThread->start();
+  //m_backupRemoverThread->start();
 
   if (!BackupManager::isBackupProgramAvailable()) {
     showGenericError(i18n("rdiff-backup is not installed"));
@@ -108,6 +108,7 @@ void MainWindow::setupTrayIcon()
 {
   m_trayIcon = new KSystemTrayIcon(KIcon("kaveau"), this);
   m_trayIcon->show();
+  connect (m_trayIcon, SIGNAL (quitSelected()), this, SLOT (close()));
 }
 
 void MainWindow::setupConnections()
@@ -160,23 +161,35 @@ void MainWindow::slotEditFilters()
   }
 }
 
- void MainWindow::closeEvent(QCloseEvent *event)
- {
-   if (m_trayIcon->isVisible()) {
-     hide();
-     event->ignore();
-   } else {
-     if (m_backupManager->isBackupRunning()) {
-       if (KMessageBox::questionYesNo(this, i18n("A backup is in progress, are you sure you want to quit kaveau?!"), i18n("WARNING - backup running")) ==   KMessageBox::Yes) {
-        m_backupManager->terminateBackup();
-        if (m_backupRemoverThread->isRunning())
-          m_backupRemoverThread->terminate();
-      } else {
-        event->ignore();
-      }
-     }
-   }
- }
+bool MainWindow::queryClose()
+{
+  if (this->isVisible()) {
+    hide();
+    return false;
+  }
+
+  if (m_backupManager->isBackupRunning()) {
+    KGuiItem continueBtn (KStandardGuiItem::yes());
+    continueBtn.setText(i18n("Continue backup"));
+    continueBtn.setToolTip(i18n("Continue the backup operation"));
+
+    KGuiItem quitBtn (KStandardGuiItem::no());
+    quitBtn.setText(i18n("Quit kaveau"));
+    quitBtn.setToolTip(i18n("Abort the backup operation and exit"));
+
+    if (KMessageBox::warningYesNo(this,
+        i18n("A backup is in progress."),
+        i18n("WARNING - backup running"),
+        quitBtn, continueBtn) ==   KMessageBox::Yes)
+    {
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    return true;
+  }
+}
 
 void MainWindow::slotPurgeOldBackups()
 {
@@ -269,7 +282,6 @@ void MainWindow::showGenericError(const QString& message, bool disableBackup)
 
 void MainWindow::backupIfNeeded()
 {
-  kDebug() << "cacca";
   if (!m_backupDevice->isAvailable()) {
     m_mainWidget->labelNextBackup->setText(i18n("next time the backup disk will be plugged"));
     return;
@@ -279,7 +291,7 @@ void MainWindow::backupIfNeeded()
     m_backupDevice->setup();
     return;
   }
-kDebug() << "hello world";
+
   QDateTime lastBackup = Settings::global()->lastBackupTime();
   QDateTime now = QDateTime::currentDateTime();
 

@@ -21,7 +21,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <KXmlGuiWindow>
+#include <kxmlguiwindow.h>
 
 namespace Ui {
   class MainWidgetBase;
@@ -42,7 +42,7 @@ class MainWindow : public KXmlGuiWindow
     virtual ~MainWindow();
 
   protected:
-    void closeEvent(QCloseEvent *event);
+    bool queryClose();
 
   private:
     void setupActions();
@@ -63,6 +63,7 @@ class MainWindow : public KXmlGuiWindow
     void slotShowLog();
     void slotEditFilters();
     void slotBackupFinished(bool, QString);
+//    void slotExit();
 
     void slotNewDeviceAttached();
     void slotBackupDeviceAccessibilityChanged(bool);
