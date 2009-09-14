@@ -62,7 +62,7 @@ void TestCommon::testFindBackupDirectoriesToDelete()
   Kaveau keeps:
   - hourly backups for the past 24 hours
   - daily backups for the past month
-  - weekly backups untill the external disk is full
+  - weekly backups until the external disk is full
 */
 void TestCommon::testFindBackupDirectoriesToDelete_data()
 {

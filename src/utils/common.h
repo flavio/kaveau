@@ -43,7 +43,7 @@ const QString calculateBackupDestination(const QString& mount);
   Kaveau keeps:
   \li hourly backups for the past 24 hours
   \li daily backups for the past month
-  \li weekly backups untill the external disk is full
+  \li weekly backups until the external disk is full
 */
 const QStringList findBackupDirectoriesToDelete(const QStringList& dirs);
 
