@@ -94,8 +94,8 @@ void MainWindow::setupActions()
 void MainWindow::setupTrayIcon()
 {
   m_trayIcon = new KSystemTrayIcon(KIcon("kaveau"), this);
+  KStandardAction::quit(this, SLOT(close()), m_trayIcon->actionCollection());
   m_trayIcon->show();
-  connect (m_trayIcon, SIGNAL (quitSelected()), this, SLOT (close()));
 }
 
 void MainWindow::setupConnections()
@@ -166,7 +166,7 @@ bool MainWindow::queryClose()
 
     if (KMessageBox::warningYesNo(this,
         i18n("A backup is in progress."),
-        i18n("WARNING - backup running"),
+        i18n("Backup running"),
         quitBtn, continueBtn) ==   KMessageBox::Yes)
     {
       return true;
