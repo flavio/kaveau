@@ -150,5 +150,5 @@ void TestCommon::testFindBackupDirectoriesToDelete_data()
 }
 
 
-QTEST_MAIN(TestCommon)
+QTEST_APPLESS_MAIN(TestCommon)
 #include "moc_testcommon.cxx"
