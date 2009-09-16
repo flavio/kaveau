@@ -92,7 +92,7 @@ const QMap< int, QList<QDateTime> > groupDateTime(QList<QDateTime>& times, DATET
   QMap<int, QList< QDateTime> > result;
 
   foreach (QDateTime dateTime, times) {
-    int key;
+    int key = -1;
 
     switch (group_by) {
       case WEEK:
