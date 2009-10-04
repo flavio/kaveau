@@ -50,7 +50,8 @@ AddBackupWizardPage2::AddBackupWizardPage2(QWidget* parent)
   layout->addWidget(widget);
   setLayout(layout);
 
-  m_view->labelIcon->setPixmap(KIconLoader::global()->loadIcon("dialog-error", KIconLoader::Desktop));
+  m_view->labelIcon->setPixmap(KIconLoader::global()->loadIcon("dialog-error",
+                                                        KIconLoader::Desktop));
 
   // just for being sure
   m_view->btnErase->setChecked(false);
@@ -87,7 +88,8 @@ bool AddBackupWizardPage2::isComplete () const
     return true;
 }
 
-void AddBackupWizardPage2::slotSetupDone(Solid::ErrorType error,QVariant message,QString udi)
+void AddBackupWizardPage2::slotSetupDone(Solid::ErrorType error,
+                                         QVariant message,QString udi)
 {
   if (error == Solid::NoError) {
     Solid::Device device (udi);
@@ -107,7 +109,8 @@ void AddBackupWizardPage2::slotSetupDone(Solid::ErrorType error,QVariant message
   else {
     m_view->stackedWidget->setCurrentIndex(ERROR_PAGE);
     m_view->labelMessage->setText(message.toString());
-    m_view->labelIcon->setPixmap(KIconLoader::global()->loadIcon("security-low", KIconLoader::Small));
+    m_view->labelIcon->setPixmap(KIconLoader::global()->loadIcon("security-low",
+                                                          KIconLoader::Small));
   }
 }
 
@@ -156,7 +159,8 @@ void AddBackupWizardPage2::checkDeviceStatus()
       }
     } else {
       m_view->stackedWidget->setCurrentIndex(MOUNTING_PAGE);
-      connect (storageAccess, SIGNAL(setupDone(Solid::ErrorType,QVariant,QString)), this, SLOT (slotSetupDone(Solid::ErrorType,QVariant,QString)));
+      connect (storageAccess, SIGNAL(setupDone(Solid::ErrorType,QVariant,QString)),
+               this, SLOT (slotSetupDone(Solid::ErrorType,QVariant,QString)));
       if (!storageAccess->setup()) {
         // mount operation is not permitted
         m_view->stackedWidget->setCurrentIndex(ERROR_PAGE);
