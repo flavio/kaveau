@@ -8,8 +8,13 @@ class DeviceWidget : public QWidget, private Ui::DeviceWidget {
   public:
     DeviceWidget(QWidget *parent = 0);
 
-  protected:
-    void changeEvent(QEvent *e);
+    QList<QTreeWidgetItem*> selectedItems();
+
+  public slots:
+    void slotRefresh();
+
+  signals:
+    void itemSelectionChanged();
 };
 
 #endif // DEVICEWIDGET_H
