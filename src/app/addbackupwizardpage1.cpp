@@ -27,12 +27,7 @@
 #include <QtCore/QList>
 #include <QtGui/QTreeWidgetItem>
 
-//solid specific includes
-#include <solid/devicenotifier.h>
-#include <solid/device.h>
-#include <solid/deviceinterface.h>
-#include <solid/storagedrive.h>
-#include <solid/storagevolume.h>
+#include "devicewidget.h"
 
 AddBackupWizardPage1::AddBackupWizardPage1(QWidget* parent)
     : QWizardPage (parent)
@@ -45,9 +40,12 @@ AddBackupWizardPage1::AddBackupWizardPage1(QWidget* parent)
   layout->addWidget(widget);
   setLayout(layout);
 
-  connect (m_view->btnRefresh, SIGNAL(clicked()), this, SLOT(slotRefresh()));
-  connect (m_view->devicesWidget, SIGNAL(itemSelectionChanged()), this, SLOT(slotDeviceItemSelectionChanged()));
-  populateDeviceView();
+  m_deviceWidget = new DeviceWidget(this);
+
+  connect (m_view->btnRefresh, SIGNAL(clicked()),
+           m_deviceWidget, SLOT(slotRefresh()));
+  connect (m_deviceWidget, SIGNAL(itemSelectionChanged()),
+           this, SLOT(slotDeviceItemSelectionChanged()));
 
   // this item is used just for accessing the selected UDI from other pages
   m_view->selectedUDI->hide();
@@ -60,54 +58,12 @@ AddBackupWizardPage1::~AddBackupWizardPage1()
 }
 
 void AddBackupWizardPage1::slotRefresh() {
-  populateDeviceView();
-}
-
-void AddBackupWizardPage1::populateDeviceView()
-{
-  m_view->devicesWidget->clear();
-
-  QList<QTreeWidgetItem *> items;
-  foreach (const Solid::Device &device, Solid::Device::listFromType(Solid::DeviceInterface::StorageDrive, QString()))
-  {
-    Solid::StorageDrive* storage = (Solid::StorageDrive*) device.asDeviceInterface(Solid::DeviceInterface::StorageDrive);
-    if ((storage->driveType() == Solid::StorageDrive::HardDisk) && ((storage->bus() == Solid::StorageDrive::Usb) || (storage->bus() == Solid::StorageDrive::Ieee1394))) {
-      QTreeWidgetItem* deviceItem = new QTreeWidgetItem((QTreeWidget*)0, QStringList(device.product()));
-      items.append(deviceItem);
-
-      foreach (const Solid::Device &volumeDevice, Solid::Device::listFromType(Solid::DeviceInterface::StorageVolume, device.udi())) {
-        Solid::StorageVolume* storage = (Solid::StorageVolume*) volumeDevice.asDeviceInterface(Solid::DeviceInterface::StorageVolume);
-        QStringList columns;
-        columns << QString() << storage->fsType();
-        if (storage->label().isEmpty())
-          columns << i18n("Undefined");
-        else
-          columns << storage->label();
-
-        columns << bytesToHuman(storage->size());
-
-        // this column is not displayed
-        columns << volumeDevice.udi();
-
-        QTreeWidgetItem* item = new QTreeWidgetItem(deviceItem, columns);
-
-        if ((storage->fsType() == "vfat") || (storage->fsType() == "ntfs"))
-          item->setIcon(1,KIcon("security-low"));
-        else if (storage->fsType().startsWith("ext"))
-          item->setIcon(1,KIcon("security-high"));
-
-        items.append(item);
-      }
-    }
-  }
-
-  m_view->devicesWidget->insertTopLevelItems(0, items);
-
+  m_deviceWidget->slotRefresh();
 }
 
 bool AddBackupWizardPage1::isComplete () const
 {
-  QList<QTreeWidgetItem*> items = m_view->devicesWidget->selectedItems();
+  QList<QTreeWidgetItem*> items = m_deviceWidget->selectedItems();
   if (items.isEmpty()) {
     m_view->selectedUDI->clear();
     return false;

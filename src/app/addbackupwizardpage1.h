@@ -23,6 +23,8 @@
 
 #include <QtGui/QWizardPage>
 
+class DeviceWidget;
+
 namespace Ui {
   class AddBackupWizardPage1View;
 }
@@ -45,9 +47,9 @@ class AddBackupWizardPage1 : public QWizardPage
     void completeChanged();
 
   private:
-    void populateDeviceView();
-
     Ui::AddBackupWizardPage1View* m_view;
+
+    DeviceWidget* m_deviceWidget;
 };
 
 #endif // ADDBACKUPWIZARDPAGE1_H

@@ -22,30 +22,13 @@
     </widget>
    </item>
    <item>
-    <widget class="QTreeWidget" name="devicesWidget">
-     <property name="columnCount">
-      <number>4</number>
+    <widget class="QFrame" name="deviceFrame">
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
      </property>
-     <column>
-      <property name="text">
-       <string>Device</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>File System</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Label</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Size</string>
-      </property>
-     </column>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
     </widget>
    </item>
    <item>
