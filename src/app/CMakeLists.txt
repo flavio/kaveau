@@ -12,7 +12,9 @@ set(kaveau_app_SRC
     addbackupwizardpage1.cpp
     addbackupwizardpage2.cpp
     addbackupwizardpage3.cpp
+    devicewidget.cpp
     logdialog.cpp
+    changediskdialog.cpp
 )
 
 kde4_add_ui_files(
@@ -23,6 +25,8 @@ kde4_add_ui_files(
   addbackupwizardpage2view.ui
   addbackupwizardpage3view.ui
   logview.ui
+  devicewidgetview.ui
+  changediskdialog.ui
 )
 
 kde4_add_executable(kaveau ${kaveau_app_SRC})

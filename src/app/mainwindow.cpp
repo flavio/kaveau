@@ -43,6 +43,7 @@
 #include "excludeditemsdialog.h"
 #include "addbackupwizard.h"
 #include "logdialog.h"
+#include "changediskdialog.h"
 
 #include "common.h"
 #include "backupdevice.h"
@@ -126,6 +127,10 @@ void MainWindow::setupConnections()
 
 void MainWindow::slotChangeDisk()
 {
+  ChangeDiskDialog dialog(this);
+  if (dialog.exec() == QDialog::Accepted) {
+    QString selectedUDI = dialog.selectedUDI();
+  }
 }
 
 void MainWindow::slotStartBackupWizard()
