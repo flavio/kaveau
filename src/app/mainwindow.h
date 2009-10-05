@@ -61,6 +61,7 @@ class MainWindow : public KXmlGuiWindow
     void slotStartBackupWizard();
     void slotStartBackup();
     void slotShowLog();
+    void slotChangeDisk();
     void slotEditFilters();
     void slotBackupFinished(bool, QString);
     void slotOldBackupDirectoriesRemoved(bool, QString);
@@ -70,8 +71,10 @@ class MainWindow : public KXmlGuiWindow
     void slotBackupDeviceSetupDone(bool, QString);
 
   private:
-    enum StackedWidgetPages {NothingPage, ConfigPage, DoingBackupPage,
+    enum StatusWidgetPages {NothingPage, ConfigPage, DoingBackupPage,
                              SuccessPage, FailurePage, GenericErrorPage};
+
+    enum DiskWidgetPages {DisconnectedPage, ConnectedPage};
 
     Ui::MainWidgetBase* m_mainWidget;
     KSystemTrayIcon* m_trayIcon;

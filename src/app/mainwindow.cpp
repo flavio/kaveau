@@ -100,17 +100,32 @@ void MainWindow::setupTrayIcon()
 
 void MainWindow::setupConnections()
 {
-  connect (m_backupManager, SIGNAL(backupFinished(bool,QString)), this, SLOT(slotBackupFinished(bool,QString)));
+  connect (m_backupManager, SIGNAL(backupFinished(bool,QString)),
+           this, SLOT(slotBackupFinished(bool,QString)));
 
-  connect (m_mainWidget->btnConfig, SIGNAL(clicked()), this, SLOT(slotStartBackupWizard()));
-  connect (m_mainWidget->btnBackup, SIGNAL(clicked()), this, SLOT(slotStartBackup()));
-  connect (m_mainWidget->btnFilter, SIGNAL(clicked()), this, SLOT(slotEditFilters()));
-  connect (m_mainWidget->btnDetails, SIGNAL(clicked()), this, SLOT(slotShowLog()));
+  connect (m_mainWidget->btnConfig, SIGNAL(clicked()),
+           this, SLOT(slotStartBackupWizard()));
+  connect (m_mainWidget->btnBackup, SIGNAL(clicked()),
+           this, SLOT(slotStartBackup()));
+  connect (m_mainWidget->btnFilter, SIGNAL(clicked()),
+           this, SLOT(slotEditFilters()));
+  connect (m_mainWidget->btnDetails, SIGNAL(clicked()),
+           this, SLOT(slotShowLog()));
+  connect (m_mainWidget->btnChangeDisk, SIGNAL(clicked()),
+           this, SLOT(slotChangeDisk()));
 
-  connect (m_backupDevice, SIGNAL(accessibilityChanged(bool)), this, SLOT(slotBackupDeviceAccessibilityChanged(bool)));
-  connect (m_backupDevice, SIGNAL(newDeviceAttached()), this, SLOT(slotNewDeviceAttached()));
-  connect (m_backupDevice, SIGNAL(setupDone(bool,QString)), this, SLOT(slotBackupDeviceSetupDone(bool,QString)));
-  connect (m_backupDevice, SIGNAL(backupDirectoriesRemoved(bool,QString)), this, SLOT(slotOldBackupDirectoriesRemoved(bool,QString)));
+  connect (m_backupDevice, SIGNAL(accessibilityChanged(bool)),
+           this, SLOT(slotBackupDeviceAccessibilityChanged(bool)));
+  connect (m_backupDevice, SIGNAL(newDeviceAttached()),
+           this, SLOT(slotNewDeviceAttached()));
+  connect (m_backupDevice, SIGNAL(setupDone(bool,QString)),
+           this, SLOT(slotBackupDeviceSetupDone(bool,QString)));
+  connect (m_backupDevice, SIGNAL(backupDirectoriesRemoved(bool,QString)),
+           this, SLOT(slotOldBackupDirectoriesRemoved(bool,QString)));
+}
+
+void MainWindow::slotChangeDisk()
+{
 }
 
 void MainWindow::slotStartBackupWizard()
@@ -128,7 +143,8 @@ void MainWindow::slotStartBackupWizard()
       if (KIO::NetAccess::del(KUrl(Settings::global()->dest()), 0))
         m_backupDevice->createBackupDirectory();
       else {
-        showGenericError(i18n("Unable to delete") + Settings::global()->dest(), true);
+        showGenericError(i18n("Unable to delete") + Settings::global()->dest(),
+                         true);
         m_mainWidget->btnBackup->setEnabled(false);
         return;
       }
@@ -183,7 +199,7 @@ void MainWindow::updateBackupView()
   Settings* settings = Settings::global();
 
   if (settings == 0) {
-    m_mainWidget->stackedWidget->setCurrentIndex(ConfigPage);
+    m_mainWidget->statusWidget->setCurrentIndex(ConfigPage);
     m_mainWidget->btnBackup->setEnabled(false);
     m_mainWidget->btnFilter->setEnabled(false);
     return;
@@ -201,30 +217,34 @@ void MainWindow::updateBackupView()
 
     if (daysTo > 7) {
       m_mainWidget->labelTime->setText(i18n("more than one week ago"));
-      m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-low", KIconLoader::Small));
+      m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-low",
+                                                          KIconLoader::Small));
     } else if (daysTo > 0) {
       m_mainWidget->labelTime->setText(i18n("%1 day(s) ago").arg(daysTo));
-      m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-medium", KIconLoader::Small));
+      m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-medium",
+                                                          KIconLoader::Small));
     } else {
       m_mainWidget->labelTime->setText(i18n("Today at %1").arg(settings->lastBackupTime().toString("hh:mm")));
-      m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-high", KIconLoader::Small));
+      m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-high",
+                                                          KIconLoader::Small));
     }
   } else {
     m_mainWidget->labelTime->setText(i18n("never"));
-    m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-low", KIconLoader::Small));
+    m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-low",
+                                                          KIconLoader::Small));
   }
 
   if (m_backupDevice->isAvailable()) {
     if (m_backupDevice->isAccesible()) {
-      m_mainWidget->labelDevice->setText (i18n("Connected"));
+      m_mainWidget->diskWidget->setCurrentIndex (ConnectedPage);
       m_mainWidget->btnBackup->setEnabled(true);
     } else {
-      m_mainWidget->labelDevice->setText (i18n ("Not Accesible"));
+      m_mainWidget->diskWidget->setCurrentIndex (DisconnectedPage);
       m_mainWidget->btnBackup->setEnabled(false);
       updateDiskUsage("");
     }
   } else {
-    m_mainWidget->labelDevice->setText (i18n("Not connected"));
+    m_mainWidget->diskWidget->setCurrentIndex (DisconnectedPage);
     m_mainWidget->btnBackup->setEnabled(false);
     updateDiskUsage("");
   }
@@ -255,7 +275,7 @@ void MainWindow::slotShowLog()
 
 void MainWindow::showGenericError(const QString& message, bool disableBackup)
 {
-  m_mainWidget->stackedWidget->setCurrentIndex(GenericErrorPage);
+  m_mainWidget->statusWidget->setCurrentIndex(GenericErrorPage);
   m_mainWidget->labelGenericError->setText(message);
   m_mainWidget->btnBackup->setEnabled(!disableBackup);
 }
@@ -286,7 +306,7 @@ void MainWindow::slotStartBackup() {
   if ((!m_backupDevice->isAccesible()) || (m_backupManager->isBackupRunning()))
     return;
 
-  m_mainWidget->stackedWidget->setCurrentIndex(DoingBackupPage);
+  m_mainWidget->statusWidget->setCurrentIndex(DoingBackupPage);
   m_mainWidget->labelNextBackup->setText("-");
   m_mainWidget->btnBackup->setEnabled(false);
 
@@ -304,7 +324,7 @@ void MainWindow::slotBackupFinished(bool ok, QString message)
 
   if (ok) {
     kDebug() << "backup completed successfully";
-    m_mainWidget->stackedWidget->setCurrentIndex(SuccessPage);
+    m_mainWidget->statusWidget->setCurrentIndex(SuccessPage);
 
     notification= new KNotification ( "backupSuccess", this );
     notification->setText( i18n("Backup successfully completed"));
@@ -317,7 +337,7 @@ void MainWindow::slotBackupFinished(bool ok, QString message)
     kDebug() << "error during backup:" << message;
     m_lastError = message;
 
-    m_mainWidget->stackedWidget->setCurrentIndex(FailurePage);
+    m_mainWidget->statusWidget->setCurrentIndex(FailurePage);
 
     notification= new KNotification ( "backupError", this );
     notification->setText( i18n("Backup failed"));
@@ -362,7 +382,7 @@ void MainWindow::slotOldBackupDirectoriesRemoved(bool ok, QString message)
 {
   if (!ok) {
     m_lastError = message;
-    m_mainWidget->stackedWidget->setCurrentIndex(FailurePage);
+    m_mainWidget->statusWidget->setCurrentIndex(FailurePage);
   }
 
   // schedule delete operation
@@ -378,12 +398,14 @@ void MainWindow::scheduleNextPurgeOperation(int whithinSeconds)
 void MainWindow::slotNewDeviceAttached()
 {
   // we don't have a backup disk, maybe we can use this one
-  KNotification *notify = new KNotification( "storageDeviceAttached", parentWidget() );
-  notify->setText( QString( "An external storage device has been attached." ) );
-  notify->setActions( i18n( "Use as backup device" ).split( ',' ) );
-  connect( notify, SIGNAL( action1Activated() ), this , SLOT( slotStartBackupWizard()));
+  KNotification *notify = new KNotification( "storageDeviceAttached",
+                                             parentWidget() );
+  notify->setText( QString( "An external storage device has been attached."));
+  notify->setActions( i18n( "Use as backup device" ).split( ',' ));
+  connect( notify, SIGNAL( action1Activated() ),
+           this , SLOT( slotStartBackupWizard()));
   notify->sendEvent();
-  QTimer::singleShot( 10*1000, notify, SLOT( close() ) );
+  QTimer::singleShot( 10*1000, notify, SLOT( close()));
 }
 
 void MainWindow::slotBackupDeviceAccessibilityChanged(bool accessible)
