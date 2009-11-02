@@ -22,6 +22,7 @@ class DeviceWidget : public QWidget, private Ui::DeviceWidget {
     void slotDeviceAdded(QString);
     void slotDeviceRemoved(QString);
     void slotCurrentItemChanged ( QTreeWidgetItem*, QTreeWidgetItem*);
+    void slotItemSelectionChanged();
 
   private:
     bool isStorageDeviceValid(Solid::StorageDrive* storage);

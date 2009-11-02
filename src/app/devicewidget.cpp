@@ -9,8 +9,6 @@
 #include <solid/storagedrive.h>
 #include <solid/storagevolume.h>
 
-#include <kdebug.h>
-
 using namespace Solid;
 
 DeviceWidget::DeviceWidget(QWidget *parent) :
@@ -29,6 +27,11 @@ DeviceWidget::DeviceWidget(QWidget *parent) :
              SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)),
              this,
              SLOT(slotCurrentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)));
+
+    connect (devicesWidget,
+             SIGNAL(itemSelectionChanged()),
+             this,
+             SLOT(slotItemSelectionChanged()));
 }
 
 QList<QTreeWidgetItem*> DeviceWidget::selectedItems() {
@@ -73,10 +76,13 @@ bool DeviceWidget::isStorageDeviceValid(StorageDrive* storage)
 void DeviceWidget::slotCurrentItemChanged(QTreeWidgetItem* curr,QTreeWidgetItem* prev)
 {
   Q_UNUSED(prev)
-  if (curr != 0) {
+  if (curr != 0)
     m_selectedUdi = curr->data(4, Qt::DisplayRole).toString();
-    kDebug() << m_selectedUdi;
-  }
+}
+
+void DeviceWidget::slotItemSelectionChanged()
+{
+  emit itemSelectionChanged();
 }
 
 void DeviceWidget::addDevice(const Device* device)
