@@ -2,7 +2,8 @@
 
 #include "devicewidget.h"
 
- #include <QtGui/QDialogButtonBox>
+#include <QtGui/QDialogButtonBox>
+#include <QtGui/QPushButton>
 
 ChangeDiskDialog::ChangeDiskDialog(QWidget *parent) :
     QDialog(parent)
@@ -11,16 +12,9 @@ ChangeDiskDialog::ChangeDiskDialog(QWidget *parent) :
 
   m_deviceWidget = new DeviceWidget(deviceFrame);
 
-  connect (btnRefresh, SIGNAL(clicked()),
-           m_deviceWidget, SLOT(slotRefresh()));
   connect (m_deviceWidget, SIGNAL(itemSelectionChanged()),
            this, SLOT(slotDeviceItemSelectionChanged()));
 
-  slotDeviceItemSelectionChanged();
-}
-
-void ChangeDiskDialog::slotRefresh()
-{
   m_deviceWidget->slotRefresh();
 }
 
@@ -60,5 +54,3 @@ void ChangeDiskDialog::slotDeviceItemSelectionChanged()
     okButton->setEnabled(true);
   }
 }
-
-

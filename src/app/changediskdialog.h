@@ -13,7 +13,6 @@ class ChangeDiskDialog : public QDialog, private Ui::ChangeDiskDialog {
     QString selectedUDI() const;
 
   private slots:
-    void slotRefresh();
     void slotDeviceItemSelectionChanged();
 
   private:
