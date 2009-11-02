@@ -74,7 +74,8 @@ class MainWindow : public KXmlGuiWindow
     enum StatusWidgetPages {NothingPage, ConfigPage, DoingBackupPage,
                              SuccessPage, FailurePage, GenericErrorPage};
 
-    enum DiskWidgetPages {DisconnectedPage, ConnectedPage};
+    enum DiskWidgetPages {DisconnectedPage, ConnectedPage,
+                          BackupDiskNotConfigured};
 
     Ui::MainWidgetBase* m_mainWidget;
     KSystemTrayIcon* m_trayIcon;
@@ -83,6 +84,7 @@ class MainWindow : public KXmlGuiWindow
     BackupDevice* m_backupDevice;
 
     QString m_lastError;
+    bool m_wizardInProgress;
 };
 
 #endif

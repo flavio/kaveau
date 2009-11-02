@@ -55,6 +55,7 @@
 MainWindow::MainWindow(QWidget *parent)
   : KXmlGuiWindow(parent)
 {
+  m_wizardInProgress = false;
   QWidget* widget = new QWidget( this );
   m_mainWidget = new Ui::MainWidgetBase();
   m_mainWidget->setupUi(widget);
@@ -70,15 +71,23 @@ MainWindow::MainWindow(QWidget *parent)
   setupTrayIcon();
   setupConnections();
 
-  if (!BackupManager::isBackupProgramAvailable()) {
+  if (!BackupManager::isBackupProgramAvailable())
     showGenericError(i18n("rdiff-backup is not installed"));
-  } else if (m_backupDevice->isAvailable() && !m_backupDevice->isAccesible()) {
-    m_backupDevice->setup();
-  } else if (m_backupDevice->isAvailable() && m_backupDevice->isAccesible())
-    backupIfNeeded();
+
+  Settings* settings = Settings::global();
+  if( settings->isBackupDeviceConfigured()) {
+    if (m_backupDevice->isAvailable() && !m_backupDevice->isAccesible()) {
+      m_backupDevice->setup();
+    } else if (m_backupDevice->isAvailable() && m_backupDevice->isAccesible()) {
+      backupIfNeeded();
+      updateDiskUsage(settings->mount());
+    }
+  } else {
+    m_mainWidget->statusWidget->setCurrentIndex(ConfigPage);
+    m_mainWidget->diskWidget->setCurrentIndex(BackupDiskNotConfigured);
+  }
 
   updateBackupView();
-  updateDiskUsage("");
 }
 
 MainWindow::~MainWindow()
@@ -135,6 +144,7 @@ void MainWindow::slotChangeDisk()
 
 void MainWindow::slotStartBackupWizard()
 {
+  m_wizardInProgress = true;
   AddBackupWizard wizard(this);
   wizard.exec();
   if (wizard.completed()) {
@@ -157,6 +167,7 @@ void MainWindow::slotStartBackupWizard()
 
     backupIfNeeded();
   }
+  m_wizardInProgress = false;
 }
 
 void MainWindow::slotEditFilters()
@@ -203,10 +214,11 @@ void MainWindow::updateBackupView()
 {
   Settings* settings = Settings::global();
 
-  if (settings == 0) {
+  if (settings->isBackupDeviceConfigured()) {
     m_mainWidget->statusWidget->setCurrentIndex(ConfigPage);
     m_mainWidget->btnBackup->setEnabled(false);
     m_mainWidget->btnFilter->setEnabled(false);
+    m_mainWidget->diskWidget->setCurrentIndex(BackupDiskNotConfigured);
     return;
   }
 
@@ -258,17 +270,18 @@ void MainWindow::updateBackupView()
 void MainWindow::updateDiskUsage(const QString& mount)
 {
   KDiskFreeSpaceInfo freeSpaceInfo = KDiskFreeSpaceInfo::freeSpaceInfo(mount);
+  Settings* settings = Settings::global();
 
-  if (!freeSpaceInfo.isValid()) {
-    m_mainWidget->diskSpaceBar->hide();
-    m_mainWidget->diskSpaceLabel->hide();
+  if (!freeSpaceInfo.isValid() && settings->isBackupDeviceConfigured()) {
+    m_mainWidget->diskWidget->setCurrentIndex(DisconnectedPage);
+  } else if (!freeSpaceInfo.isValid() && !settings->isBackupDeviceConfigured()) {
+    m_mainWidget->diskWidget->setCurrentIndex(BackupDiskNotConfigured);
   } else {
+    m_mainWidget->diskWidget->setCurrentIndex(ConnectedPage);
     m_mainWidget->diskSpaceBar->setMinimum(0);
     m_mainWidget->diskSpaceBar->setMaximum(freeSpaceInfo.size());
     m_mainWidget->diskSpaceBar->setValue(freeSpaceInfo.used());
-    m_mainWidget->diskSpaceBar->show();
     m_mainWidget->diskSpaceLabel->setText(i18n("%1 over %2").arg(bytesToHuman(freeSpaceInfo.used())).arg(bytesToHuman(freeSpaceInfo.size())));
-    m_mainWidget->diskSpaceLabel->show();
   }
 }
 
@@ -402,6 +415,9 @@ void MainWindow::scheduleNextPurgeOperation(int whithinSeconds)
 
 void MainWindow::slotNewDeviceAttached()
 {
+  if (m_wizardInProgress)
+    return;
+
   // we don't have a backup disk, maybe we can use this one
   KNotification *notify = new KNotification( "storageDeviceAttached",
                                              parentWidget() );
