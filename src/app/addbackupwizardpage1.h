@@ -40,7 +40,6 @@ class AddBackupWizardPage1 : public QWizardPage
     bool isComplete () const;
 
   private slots:
-    void slotRefresh();
     void slotDeviceItemSelectionChanged();
 
   signals:

@@ -40,10 +40,8 @@ AddBackupWizardPage1::AddBackupWizardPage1(QWidget* parent)
   layout->addWidget(widget);
   setLayout(layout);
 
-  m_deviceWidget = new DeviceWidget(this);
+  m_deviceWidget = new DeviceWidget(m_view->deviceFrame);
 
-  connect (m_view->btnRefresh, SIGNAL(clicked()),
-           m_deviceWidget, SLOT(slotRefresh()));
   connect (m_deviceWidget, SIGNAL(itemSelectionChanged()),
            this, SLOT(slotDeviceItemSelectionChanged()));
 
@@ -55,10 +53,6 @@ AddBackupWizardPage1::AddBackupWizardPage1(QWidget* parent)
 AddBackupWizardPage1::~AddBackupWizardPage1()
 {
   delete m_view;
-}
-
-void AddBackupWizardPage1::slotRefresh() {
-  m_deviceWidget->slotRefresh();
 }
 
 bool AddBackupWizardPage1::isComplete () const
