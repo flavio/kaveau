@@ -170,6 +170,11 @@ void Settings::setDiskUdi(const QString& uid)
   m_diskUdi = uid;
 }
 
+bool Settings::isBackupDeviceConfigured()
+{
+  return !m_diskUdi.isEmpty();
+}
+
 QStringList Settings::excludeList() const
 {
   return m_excludeList;

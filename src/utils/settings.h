@@ -57,6 +57,7 @@ class Settings
 
     QString diskUdi() const;
     void setDiskUdi(const QString& uid);
+    bool isBackupDeviceConfigured();
 
     QString dest() const;
 
