@@ -41,8 +41,10 @@ BackupDevice::BackupDevice(QObject* parent)
   : QObject(parent)
 {
   Solid::DeviceNotifier* notifier = Solid::DeviceNotifier::instance();
-  connect (notifier, SIGNAL(deviceAdded(QString)), this, SLOT(slotDeviceAdded(QString)));
-  connect (notifier, SIGNAL(deviceRemoved(QString)), this, SLOT(slotDeviceRemoved(QString)));
+  connect (notifier, SIGNAL(deviceAdded(QString)),
+           this, SLOT(slotDeviceAdded(QString)));
+  connect (notifier, SIGNAL(deviceRemoved(QString)),
+           this, SLOT(slotDeviceRemoved(QString)));
 }
 
 bool BackupDevice::isAvailable()
