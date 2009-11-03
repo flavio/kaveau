@@ -60,20 +60,16 @@ void AddBackupWizard::slotFinishClicked()
   m_completed = true;
 }
 
-Settings AddBackupWizard::settings()
+void AddBackupWizard::updateGlobalSettings()
 {
+  Settings* settings = Settings::global();
   KUser user;
-  QString source = user.homeDir();
-  QString destination = page2->destination();
-  QString relativeDest = page2->relativeDestination();
-  QString deviceUDI = page2->deviceUDI();
-  QStringList excludedDirs = page3->excludedDirs();
-  QString mountPoint = page2->mountPoint();
 
-  Settings settings (source, deviceUDI, relativeDest, excludedDirs);
-  settings.setMount( mountPoint);
-
-  return settings;
+  settings->setSource(user.homeDir());
+  settings->setDiskUdi(page2->deviceUDI());
+  settings->setRelativeDest(page2->relativeDestination());
+  settings->setExcludeList(page3->excludedDirs());
+  settings->setMount( page2->mountPoint());
 }
 
 bool AddBackupWizard::deleteDestination() const

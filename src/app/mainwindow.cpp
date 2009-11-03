@@ -148,23 +148,21 @@ void MainWindow::slotStartBackupWizard()
   AddBackupWizard wizard(this);
   wizard.exec();
   if (wizard.completed()) {
-    *Settings::global() = wizard.settings();
+    wizard.updateGlobalSettings();
 
     updateBackupView();
 
     if (wizard.deleteDestination()) {
       kDebug() << "Going to erase" << Settings::global()->dest();
       m_mainWidget->btnBackup->setEnabled(false);
-      if (KIO::NetAccess::del(KUrl(Settings::global()->dest()), 0))
-        m_backupDevice->createBackupDirectory();
-      else {
+      if (!KIO::NetAccess::del(KUrl(Settings::global()->dest()), 0)) {
         showGenericError(i18n("Unable to delete") + Settings::global()->dest(),
                          true);
         m_mainWidget->btnBackup->setEnabled(false);
         return;
       }
     }
-
+    m_backupDevice->createBackupDirectory();
     backupIfNeeded();
   }
   m_wizardInProgress = false;

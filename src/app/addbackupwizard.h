@@ -38,7 +38,7 @@ class AddBackupWizard: public QWizard
 
     bool completed() const { return m_completed; }
 
-    Settings settings();
+    void updateGlobalSettings();
     bool deleteDestination() const;
 
   private:
