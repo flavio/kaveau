@@ -49,7 +49,7 @@ class MainWindow : public KXmlGuiWindow
     void setupTrayIcon();
 
     void updateBackupView();
-    void updateDiskUsage(const QString&);
+    void updateDiskUsage();
     void showGenericError(const QString& message, bool disableBackup = true);
 
     void backupIfNeeded();
@@ -72,7 +72,7 @@ class MainWindow : public KXmlGuiWindow
 
   private:
     enum StatusWidgetPages {NothingPage, ConfigPage, DoingBackupPage,
-                             SuccessPage, FailurePage, GenericErrorPage};
+                            SuccessPage, FailurePage, GenericErrorPage};
 
     enum DiskWidgetPages {DisconnectedPage, ConnectedPage,
                           BackupDiskNotConfigured};

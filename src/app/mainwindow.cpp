@@ -75,17 +75,8 @@ MainWindow::MainWindow(QWidget *parent)
     showGenericError(i18n("rdiff-backup is not installed"));
 
   Settings* settings = Settings::global();
-  if( settings->isBackupDeviceConfigured()) {
-    if (m_backupDevice->isAvailable() && !m_backupDevice->isAccesible()) {
-      m_backupDevice->setup();
-    } else if (m_backupDevice->isAvailable() && m_backupDevice->isAccesible()) {
-      backupIfNeeded();
-      updateDiskUsage(settings->mount());
-    }
-  } else {
-    m_mainWidget->statusWidget->setCurrentIndex(ConfigPage);
-    m_mainWidget->diskWidget->setCurrentIndex(BackupDiskNotConfigured);
-  }
+  if (settings->isBackupDeviceConfigured() && (m_backupDevice->isAvailable()))
+    m_backupDevice->setup();
 
   updateBackupView();
 }
@@ -212,75 +203,58 @@ void MainWindow::updateBackupView()
 {
   Settings* settings = Settings::global();
 
-  if (settings->isBackupDeviceConfigured()) {
+  if (!settings->isBackupDeviceConfigured()) {
     m_mainWidget->statusWidget->setCurrentIndex(ConfigPage);
     m_mainWidget->btnBackup->setEnabled(false);
     m_mainWidget->btnFilter->setEnabled(false);
-    m_mainWidget->diskWidget->setCurrentIndex(BackupDiskNotConfigured);
-    return;
-  }
+  } else {
+    m_mainWidget->labelSource->setText( settings->source());
+    m_mainWidget->btnFilter->setEnabled(true);
 
-  m_mainWidget->labelSource->setText( settings->source());
-  m_mainWidget->labelDest->setText( settings->dest());
-  m_mainWidget->btnFilter->setEnabled(true);
+    KIconLoader* iconLoader = KIconLoader::global();
 
-  KIconLoader* iconLoader = KIconLoader::global();
+    if (settings->lastBackupTime().isValid()) {
+      QDateTime now = QDateTime::currentDateTime();
+      int daysTo = settings->lastBackupTime().daysTo(now);
 
-  if (settings->lastBackupTime().isValid()) {
-    QDateTime now = QDateTime::currentDateTime();
-    int daysTo = settings->lastBackupTime().daysTo(now);
-
-    if (daysTo > 7) {
-      m_mainWidget->labelTime->setText(i18n("more than one week ago"));
+      if (daysTo > 7) {
+        m_mainWidget->labelTime->setText(i18n("more than one week ago"));
+        m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-low",
+                                                            KIconLoader::Small));
+      } else if (daysTo > 0) {
+        m_mainWidget->labelTime->setText(i18n("%1 day(s) ago").arg(daysTo));
+        m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-medium",
+                                                            KIconLoader::Small));
+      } else {
+        m_mainWidget->labelTime->setText(i18n("Today at %1").arg(settings->lastBackupTime().toString("hh:mm")));
+        m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-high",
+                                                            KIconLoader::Small));
+      }
+    } else {
+      m_mainWidget->labelTime->setText(i18n("never"));
       m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-low",
-                                                          KIconLoader::Small));
-    } else if (daysTo > 0) {
-      m_mainWidget->labelTime->setText(i18n("%1 day(s) ago").arg(daysTo));
-      m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-medium",
-                                                          KIconLoader::Small));
-    } else {
-      m_mainWidget->labelTime->setText(i18n("Today at %1").arg(settings->lastBackupTime().toString("hh:mm")));
-      m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-high",
-                                                          KIconLoader::Small));
+                                                            KIconLoader::Small));
     }
-  } else {
-    m_mainWidget->labelTime->setText(i18n("never"));
-    m_mainWidget->labelStatusIcon->setPixmap(iconLoader->loadIcon("security-low",
-                                                          KIconLoader::Small));
-  }
 
-  if (m_backupDevice->isAvailable()) {
-    if (m_backupDevice->isAccesible()) {
-      m_mainWidget->diskWidget->setCurrentIndex (ConnectedPage);
-      m_mainWidget->btnBackup->setEnabled(true);
-    } else {
-      m_mainWidget->diskWidget->setCurrentIndex (DisconnectedPage);
-      m_mainWidget->btnBackup->setEnabled(false);
-      updateDiskUsage("");
-    }
-  } else {
-    m_mainWidget->diskWidget->setCurrentIndex (DisconnectedPage);
-    m_mainWidget->btnBackup->setEnabled(false);
-    updateDiskUsage("");
+    m_mainWidget->btnBackup->setEnabled(m_backupDevice->isAccesible());
   }
+  updateDiskUsage();
 }
 
-void MainWindow::updateDiskUsage(const QString& mount)
+void MainWindow::updateDiskUsage()
 {
-  KDiskFreeSpaceInfo freeSpaceInfo = KDiskFreeSpaceInfo::freeSpaceInfo(mount);
   Settings* settings = Settings::global();
-
-  if (!freeSpaceInfo.isValid() && settings->isBackupDeviceConfigured()) {
-    m_mainWidget->diskWidget->setCurrentIndex(DisconnectedPage);
-  } else if (!freeSpaceInfo.isValid() && !settings->isBackupDeviceConfigured()) {
-    m_mainWidget->diskWidget->setCurrentIndex(BackupDiskNotConfigured);
-  } else {
+  if (m_backupDevice->isAccesible()) {
+    KDiskFreeSpaceInfo freeSpaceInfo = KDiskFreeSpaceInfo::freeSpaceInfo(settings->mount());
     m_mainWidget->diskWidget->setCurrentIndex(ConnectedPage);
     m_mainWidget->diskSpaceBar->setMinimum(0);
     m_mainWidget->diskSpaceBar->setMaximum(freeSpaceInfo.size());
     m_mainWidget->diskSpaceBar->setValue(freeSpaceInfo.used());
     m_mainWidget->diskSpaceLabel->setText(i18n("%1 over %2").arg(bytesToHuman(freeSpaceInfo.used())).arg(bytesToHuman(freeSpaceInfo.size())));
-  }
+  } else if (!settings->isBackupDeviceConfigured())
+    m_mainWidget->diskWidget->setCurrentIndex(BackupDiskNotConfigured);
+  else
+    m_mainWidget->diskWidget->setCurrentIndex(DisconnectedPage);
 }
 
 void MainWindow::slotShowLog()
@@ -365,7 +339,6 @@ void MainWindow::slotBackupFinished(bool ok, QString message)
   // schedule next backup
   scheduleNextBackup( BACKUP_INTERVAL );
   updateBackupView();
-  updateDiskUsage(Settings::global()->mount());
 }
 
 void MainWindow::scheduleNextBackup(int whithinSeconds)
@@ -402,8 +375,8 @@ void MainWindow::slotOldBackupDirectoriesRemoved(bool ok, QString message)
   }
 
   // schedule delete operation
-  scheduleNextPurgeOperation ( BACKUP_INTERVAL*3);
-  updateDiskUsage(Settings::global()->mount());
+  scheduleNextPurgeOperation ( BACKUP_INTERVAL*3 );
+  updateDiskUsage();
 }
 
 void MainWindow::scheduleNextPurgeOperation(int whithinSeconds)
@@ -439,8 +412,6 @@ void MainWindow::slotBackupDeviceSetupDone(bool ok, QString message)
 {
   if (!ok)
     showGenericError(message);
-  else
-    updateDiskUsage(Settings::global()->mount());
 
   updateBackupView();
   backupIfNeeded();
