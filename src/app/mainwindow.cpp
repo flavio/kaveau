@@ -129,11 +129,13 @@ void MainWindow::setupConnections()
 
 void MainWindow::slotChangeDisk()
 {
+  m_wizardInProgress = true;
   ChangeDiskDialog dialog(this);
   if (dialog.exec() == QDialog::Accepted) {
     QString selectedUDI = dialog.selectedUDI();
     kDebug() << "new uDI" << selectedUDI;
   }
+  m_wizardInProgress = false;
 }
 
 void MainWindow::slotStartBackupWizard()
@@ -400,7 +402,8 @@ void MainWindow::scheduleNextPurgeOperation(int whithinSeconds)
 
 void MainWindow::slotNewDeviceAttached()
 {
-  if (m_wizardInProgress)
+  Settings* settings = Settings::global();
+  if ((m_wizardInProgress) || (settings->isBackupDeviceConfigured()))
     return;
 
   // we don't have a backup disk, maybe we can use this one
