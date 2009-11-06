@@ -130,15 +130,13 @@ void BackupDevice::slotDiskMounted(Solid::ErrorType error,QVariant message,QStri
     emit setupDone ( false, i18n("unable to mount backup partition"));
 }
 
-
 void BackupDevice::slotDeviceAdded(QString udi)
 {
-  if (isDeviceInteresting(udi)) {
-    Settings* settings = Settings::global();
-    if (settings->diskUdi() == udi)
-      setup();
-    else
-      emit newDeviceAttached();
+  Settings* settings = Settings::global();
+  if (settings->diskUdi() == udi)
+    setup();
+  else if (isDeviceInteresting(udi)) {
+    emit newDeviceAttached();
   }
 }
 
