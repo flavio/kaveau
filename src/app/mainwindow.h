@@ -70,6 +70,8 @@ class MainWindow : public KXmlGuiWindow
     void slotBackupDeviceAccessibilityChanged(bool);
     void slotBackupDeviceSetupDone(bool, QString);
 
+    void slotSystemTrayClose();
+
   private:
     enum StatusWidgetPages {NothingPage, ConfigPage, DoingBackupPage,
                             SuccessPage, FailurePage, GenericErrorPage};
@@ -85,6 +87,7 @@ class MainWindow : public KXmlGuiWindow
 
     QString m_lastError;
     bool m_wizardInProgress;
+    bool m_systemTrayClose;
 };
 
 #endif

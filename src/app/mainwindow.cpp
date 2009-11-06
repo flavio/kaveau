@@ -55,6 +55,7 @@
 MainWindow::MainWindow(QWidget *parent)
   : KXmlGuiWindow(parent)
 {
+  m_systemTrayClose = false;
   m_wizardInProgress = false;
   QWidget* widget = new QWidget( this );
   m_mainWidget = new Ui::MainWidgetBase();
@@ -95,7 +96,8 @@ void MainWindow::setupActions()
 void MainWindow::setupTrayIcon()
 {
   m_trayIcon = new KSystemTrayIcon(KIcon("kaveau"), this);
-  KStandardAction::quit(this, SLOT(close()), m_trayIcon->actionCollection());
+  KStandardAction::quit(this, SLOT(slotSystemTrayClose()),
+                        m_trayIcon->actionCollection());
   m_trayIcon->show();
 }
 
@@ -130,6 +132,7 @@ void MainWindow::slotChangeDisk()
   ChangeDiskDialog dialog(this);
   if (dialog.exec() == QDialog::Accepted) {
     QString selectedUDI = dialog.selectedUDI();
+    kDebug() << "new uDI" << selectedUDI;
   }
 }
 
@@ -168,9 +171,16 @@ void MainWindow::slotEditFilters()
   }
 }
 
+void MainWindow::slotSystemTrayClose()
+{
+  m_systemTrayClose = true;
+  close();
+}
+
+
 bool MainWindow::queryClose()
 {
-  if (this->isVisible()) {
+  if (this->isVisible() && !m_systemTrayClose) {
     hide();
     return false;
   }
@@ -191,6 +201,7 @@ bool MainWindow::queryClose()
     {
       return true;
     } else {
+      m_systemTrayClose = false;
       return false;
     }
   } else {
