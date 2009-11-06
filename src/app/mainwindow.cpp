@@ -428,6 +428,8 @@ void MainWindow::slotBackupDeviceAccessibilityChanged(bool accessible)
 {
   if (accessible)
     backupIfNeeded();
+  else if (m_backupDevice->isAvailable())
+    m_backupDevice->setup(); // remount the backup device
 
   updateBackupView();
 }
