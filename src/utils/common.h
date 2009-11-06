@@ -39,12 +39,19 @@ const QString calculateBackupDestination(const QString& mount, const QString& re
 const QString calculateBackupDestination(const QString& mount);
 
 /*!
-  Function used for finding the old backup directories to remove.
+  Function used to find the old backup directories to remove.
   Kaveau keeps:
   \li hourly backups for the past 24 hours
   \li daily backups for the past month
   \li weekly backups until the external disk is full
 */
 const QStringList findBackupDirectoriesToDelete(const QStringList& dirs);
+
+
+/*!
+  Function used to check if a certain device can be used by kaveau.
+  \param udi the udi of the device to check
+*/
+bool isDeviceInteresting(const QString& udi);
 
 #endif // COMMON_H

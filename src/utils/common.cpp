@@ -29,6 +29,15 @@
 #include <QtCore/QMap>
 #include <QtNetwork/QHostInfo>
 
+//solid specific includes
+#include <solid/devicenotifier.h>
+#include <solid/device.h>
+#include <solid/deviceinterface.h>
+#include <solid/storagedrive.h>
+#include <solid/storagevolume.h>
+
+using namespace Solid;
+
 const QString bytesToHuman(qulonglong bytes)
 {
   QString size;
@@ -216,5 +225,18 @@ const QStringList findBackupDirectoriesToDelete(const QStringList& dirs)
   }
 
   return directoriesToRemove;
+}
+
+bool isDeviceInteresting(const QString& udi)
+{
+  Device device (udi);
+  StorageDrive* storage = (StorageDrive*) device.asDeviceInterface(DeviceInterface::StorageDrive);
+  if (storage == 0) {
+    return false;
+  } else {
+    return (storage->driveType() == StorageDrive::HardDisk) &&
+              ((storage->bus() == StorageDrive::Usb) ||
+               (storage->bus() == StorageDrive::Ieee1394));
+  }
 }
 

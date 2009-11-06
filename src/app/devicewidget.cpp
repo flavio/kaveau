@@ -44,8 +44,7 @@ void DeviceWidget::slotRefresh()
 
   foreach (const Device &device, Device::listFromType(DeviceInterface::StorageDrive, QString()))
   {
-    StorageDrive* storage = (StorageDrive*) device.asDeviceInterface(DeviceInterface::StorageDrive);
-    if (isStorageDeviceValid(storage))
+    if (isDeviceInteresting(device.udi()))
       addDevice(&device);
   }
 }
@@ -60,17 +59,6 @@ void DeviceWidget::slotDeviceRemoved(QString udi)
 {
   Q_UNUSED(udi)
   slotRefresh();
-}
-
-bool DeviceWidget::isStorageDeviceValid(StorageDrive* storage)
-{
-  if (storage == 0) {
-    return false;
-  } else {
-    return (storage->driveType() == StorageDrive::HardDisk) &&
-              ((storage->bus() == StorageDrive::Usb) ||
-               (storage->bus() == StorageDrive::Ieee1394));
-  }
 }
 
 void DeviceWidget::slotCurrentItemChanged(QTreeWidgetItem* curr,QTreeWidgetItem* prev)

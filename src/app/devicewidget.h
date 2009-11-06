@@ -5,7 +5,6 @@
 
 namespace Solid {
   class Device;
-  class StorageDrive;
 }
 
 class DeviceWidget : public QWidget, private Ui::DeviceWidget {
@@ -25,7 +24,6 @@ class DeviceWidget : public QWidget, private Ui::DeviceWidget {
     void slotItemSelectionChanged();
 
   private:
-    bool isStorageDeviceValid(Solid::StorageDrive* storage);
     void addDevice(const Solid::Device* device);
 
   signals:
