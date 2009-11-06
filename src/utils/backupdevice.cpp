@@ -174,8 +174,10 @@ void BackupDevice::slotDeviceAccessibilityChanged(bool accessible, QString udi)
 bool BackupDevice::createBackupDirectory()
 {
   Settings* settings = Settings::global();
-  QDir dir;
-  return dir.mkpath(settings->dest());
+  QDir dir (settings->dest());
+  if (!dir.exists())
+    return dir.mkpath(settings->dest());
+  return true;
 }
 
 void BackupDevice::removeBackupDirectories(QStringList& dirs)

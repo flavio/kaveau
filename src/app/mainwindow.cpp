@@ -153,7 +153,6 @@ void MainWindow::slotStartBackupWizard()
         return;
       }
     }
-    m_backupDevice->createBackupDirectory();
     backupIfNeeded();
   }
   m_wizardInProgress = false;
@@ -285,6 +284,10 @@ void MainWindow::backupIfNeeded()
 
   if ((!lastBackup.isValid()) or (lastBackup.secsTo(now) > BACKUP_INTERVAL)) {
     // perform the backup immediately
+
+    // ensure the destination directory exists
+    m_backupDevice->createBackupDirectory();
+
     slotStartBackup();
   } else {
     // schedule the backup

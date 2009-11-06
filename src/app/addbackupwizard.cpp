@@ -67,7 +67,7 @@ void AddBackupWizard::updateGlobalSettings()
 
   settings->setSource(user.homeDir());
   settings->setDiskUdi(page2->deviceUDI());
-  settings->setRelativeDest(page2->relativeDestination());
+  settings->updateRelativeDesc();
   settings->setExcludeList(page3->excludedDirs());
   settings->setMount( page2->mountPoint());
 }

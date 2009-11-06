@@ -175,11 +175,6 @@ QString AddBackupWizardPage2::destination() const
   return m_destination;
 }
 
-QString AddBackupWizardPage2::relativeDestination() const
-{
-  return m_relative;
-}
-
 QString AddBackupWizardPage2::mountPoint() const
 {
   return m_mount;
