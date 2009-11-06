@@ -65,7 +65,7 @@ bool BackupDevice::isAccesible()
 {
   Settings* settings = Settings::global();
 
-  if (settings->diskUdi().isEmpty())
+  if (!isAvailable())
     return false;
 
   Solid::Device device (settings->diskUdi());
