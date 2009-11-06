@@ -66,6 +66,7 @@ class Settings
 
     QString relativeDest() const;
     void setRelativeDest(const QString& relativeDest);
+    void updateRelativeDesc();
 
     QStringList excludeList() const;
     void setExcludeList(const QStringList& excludeList);
@@ -73,8 +74,6 @@ class Settings
     QDateTime lastBackupTime() const;
     void setLastBackupTime(const QDateTime&);
 
-    Settings & operator=(const Settings &other);
-    
   private:
     //! method used for calculating the final backup path, used when m_source or m_mount are changed
     void updateDest();

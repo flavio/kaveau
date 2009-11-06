@@ -101,20 +101,6 @@ void Settings::saveConfigFile()
   configGroup.sync();
 }
 
-Settings& Settings::operator=(const Settings& other)
-{
-  if (this != &other) {
-    this->setDiskUdi(other.diskUdi());
-    this->setExcludeList(other.excludeList());
-    this->setLastBackupTime(other.lastBackupTime());
-    this->setRelativeDest(other.relativeDest());
-    this->setSource(other.source());
-    this->setMount(other.mount());
-  }
-
-  return *this;
-}
-
 QString Settings::source() const
 {
   return m_source;
@@ -142,7 +128,7 @@ QString Settings::mount() const
 
 void Settings::updateDest()
 {
-  m_dest = calculateBackupDestination(m_mount, m_relativeDest);
+  m_dest = calculateBackupDestination(m_mount);
 }
 
 QString Settings::dest() const
@@ -159,6 +145,11 @@ void Settings::setRelativeDest(const QString& relativeDest)
 {
   m_relativeDest = relativeDest;
 }
+
+void Settings::updateRelativeDesc() {
+  m_relativeDest = calculateRelativeBackupPath();
+}
+
 
 QString Settings::diskUdi() const
 {
