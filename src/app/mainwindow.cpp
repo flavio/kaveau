@@ -132,8 +132,12 @@ void MainWindow::slotChangeDisk()
   m_wizardInProgress = true;
   ChangeDiskDialog dialog(this);
   if (dialog.exec() == QDialog::Accepted) {
-    QString selectedUDI = dialog.selectedUDI();
-    kDebug() << "new uDI" << selectedUDI;
+    Settings* settings = Settings::global();
+    settings->setDiskUdi(dialog.selectedUDI());
+    // force a new backup
+    settings->setLastBackupTime(QDateTime());
+    m_backupDevice->setup();
+    updateBackupView();
   }
   m_wizardInProgress = false;
 }
@@ -262,11 +266,14 @@ void MainWindow::updateDiskUsage()
     m_mainWidget->diskSpaceBar->setMinimum(0);
     m_mainWidget->diskSpaceBar->setMaximum(freeSpaceInfo.size());
     m_mainWidget->diskSpaceBar->setValue(freeSpaceInfo.used());
-    m_mainWidget->diskSpaceLabel->setText(i18n("%1 over %2").arg(bytesToHuman(freeSpaceInfo.used())).arg(bytesToHuman(freeSpaceInfo.size())));
-  } else if (!settings->isBackupDeviceConfigured())
+    m_mainWidget->diskSpaceLabel->setText(i18n("%1 used over %2").arg(bytesToHuman(freeSpaceInfo.used())).arg(bytesToHuman(freeSpaceInfo.size())));
+  } else if (!settings->isBackupDeviceConfigured()) {
+    // not accessible and not configured
     m_mainWidget->diskWidget->setCurrentIndex(BackupDiskNotConfigured);
-  else
+  } else{
     m_mainWidget->diskWidget->setCurrentIndex(DisconnectedPage);
+    m_mainWidget->labelDiskNotConnected->setVisible(!m_backupDevice->isAvailable());
+  }
 }
 
 void MainWindow::slotShowLog()
@@ -429,8 +436,9 @@ void MainWindow::slotBackupDeviceSetupDone(bool ok, QString message)
 {
   if (!ok)
     showGenericError(message);
-
-  updateBackupView();
-  backupIfNeeded();
-  slotPurgeOldBackups();
+  else {
+    updateBackupView();
+    backupIfNeeded();
+    slotPurgeOldBackups();
+  }
 }
