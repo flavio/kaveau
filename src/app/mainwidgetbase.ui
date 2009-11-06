@@ -81,6 +81,22 @@
          <widget class="QWidget" name="page_9">
           <layout class="QVBoxLayout" name="verticalLayout_10">
            <item>
+            <widget class="QLabel" name="labelDiskNotConnected">
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Not connected</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
             <layout class="QHBoxLayout" name="horizontalLayout">
              <item>
               <spacer name="horizontalSpacer_5">
@@ -118,22 +134,6 @@
             </layout>
            </item>
            <item>
-            <widget class="QLabel" name="label_9">
-             <property name="font">
-              <font>
-               <weight>75</weight>
-               <bold>true</bold>
-              </font>
-             </property>
-             <property name="text">
-              <string>Not connected</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item>
             <spacer name="verticalSpacer_7">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
@@ -151,9 +151,15 @@
          <widget class="QWidget" name="page_7">
           <layout class="QVBoxLayout" name="verticalLayout_9">
            <item>
-            <widget class="QLabel" name="diskSpaceLabel">
+            <widget class="QLabel" name="label_8">
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
              <property name="text">
-              <string>TextLabel</string>
+              <string>Connected</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -168,15 +174,9 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="label_8">
-             <property name="font">
-              <font>
-               <weight>75</weight>
-               <bold>true</bold>
-              </font>
-             </property>
+            <widget class="QLabel" name="diskSpaceLabel">
              <property name="text">
-              <string>Connected</string>
+              <string>TextLabel</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -369,7 +369,7 @@ p, li { white-space: pre-wrap; }
                  <number>0</number>
                 </property>
                 <property name="value">
-                 <number>255442</number>
+                 <number>255716</number>
                 </property>
                </widget>
               </item>
