@@ -20,6 +20,7 @@
 
 #include "backupdevice.h"
 #include "settings.h"
+#include "common.h"
 
 #include <klocale.h>
 #include <kio/deletejob.h>
@@ -129,13 +130,15 @@ void BackupDevice::slotDiskMounted(Solid::ErrorType error,QVariant message,QStri
     emit setupDone ( false, i18n("unable to mount backup partition"));
 }
 
+
 void BackupDevice::slotDeviceAdded(QString udi)
 {
-  Settings* settings = Settings::global();
-  if (settings->diskUdi() == udi) {
-    setup();
-  } else {
-    emit newDeviceAttached();
+  if (isDeviceInteresting(udi)) {
+    Settings* settings = Settings::global();
+    if (settings->diskUdi() == udi)
+      setup();
+    else
+      emit newDeviceAttached();
   }
 }
 
