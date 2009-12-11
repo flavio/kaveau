@@ -11,3 +11,5 @@ set(kaveau_utils_SRC
 )
 
 KDE4_ADD_LIBRARY(kaveau_utils STATIC ${kaveau_utils_SRC})
+target_link_libraries(kaveau_utils ${KDE4_KIO_LIBS} ${KDE4_SOLID_LIBS})
+
