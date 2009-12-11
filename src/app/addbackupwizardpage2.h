@@ -21,6 +21,7 @@
 #ifndef ADDBACKUPWIZARDPAGE2_H
 #define ADDBACKUPWIZARDPAGE2_H
 
+#include <QtCore/QVariant>
 #include <QtGui/QWizardPage>
 
 #include <solid/solidnamespace.h>
@@ -49,7 +50,7 @@ class AddBackupWizardPage2 : public QWizardPage
 
   private slots:
     void slotBtnClicked();
-    void slotSetupDone(Solid::ErrorType,QVariant,QString);
+    void slotSetupDone(Solid::ErrorType, QVariant, QString);
 
   private:
     void setupConnections();
