@@ -32,7 +32,6 @@
 
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
-#include <QtCore/QVariant>
 
 #define MOUNTING_PAGE 0
 #define CHOICE_PAGE 1

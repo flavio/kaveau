@@ -26,7 +26,7 @@
 
 int main (int argc, char *argv[])
 {
-  KAboutData aboutData( "kaveau", 0, ki18n("kaveau"), "0.0.1",
+  KAboutData aboutData( "kaveau", 0, ki18n("kaveau"), "0.1",
                           ki18n("A simple backup tool"),
                           KAboutData::License_GPL,
                           ki18n("Copyright (c) 2009 Flavio Castelli") );
