@@ -73,7 +73,7 @@ MainWindow::MainWindow(QWidget *parent)
   setupConnections();
 
   if (!BackupManager::isBackupProgramAvailable())
-    showGenericError(i18n("rdiff-backup is not installed"));
+    showGenericError(i18n("rync is not installed"));
 
   Settings* settings = Settings::global();
   if (settings->isBackupDeviceConfigured() && (m_backupDevice->isAvailable()))
