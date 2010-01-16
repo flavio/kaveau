@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Service
+Exec=kaveaudaemon
+X-KDE-StartupNotify=false
+X-KDE-autostart-condition=kaveaudaemonrc:Basic Settings:Start Kaveau:true
+OnlyShowIn=KDE;
+X-KDE-autostart-phase=1
+Name=Kaveau Daemon
+Name[x-test]=xxKaveau Daemonxx
+Comment=The Kaveau Daemon manages backups.
+Comment[x-test]=xxThe Kaveau Daemon manages backups.xx
