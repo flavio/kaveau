@@ -3,7 +3,7 @@
 
 #include <QtCore/QObject>
 
-lass QSocketNotifier;
+class QSocketNotifier;
 
 class BackupDevice;
 class BackupManager;
