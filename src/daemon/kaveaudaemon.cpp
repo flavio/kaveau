@@ -12,16 +12,18 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "../utils/common.h"
-#include "../utils/backupdevice.h"
-#include "../utils/backupmanager.h"
-#include "../utils/settings.h"
+#include "common.h"
+#include "backupdevice.h"
+#include "backupmanager.h"
+#include "settings.h"
 
 int KaveauDaemon::sighupFd[2]  = {0.0};
 int KaveauDaemon::sigtermFd[2] = {0.0};
 
 //TODO move to kconfig xt?
 #define BACKUP_INTERVAL 3600 // backup every hour
+
+using namespace Kaveau;
 
 KaveauDaemon::KaveauDaemon(QObject *parent)
   : QObject(parent)
@@ -247,3 +249,5 @@ void KaveauDaemon::slotBackupDeviceSetupDone(bool ok, QString message)
     slotPurgeOldBackups();
   }
 }
+
+#include "kaveaudaemon.moc"
