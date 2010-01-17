@@ -43,7 +43,7 @@ void TestCommon::testFindBackupDirectoriesToDelete()
   QFETCH(QStringList, dirs);
   QFETCH(QStringList, expected);
 
-  QStringList result = findBackupDirectoriesToDelete(dirs);
+  QStringList result = Kaveau::findBackupDirectoriesToDelete(dirs);
   qSort(result.begin(), result.end());
   qSort(expected.begin(), expected.end());
 
