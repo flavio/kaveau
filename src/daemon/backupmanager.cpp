@@ -34,6 +34,8 @@
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 
+using namespace Kaveau;
+
 BackupManager::BackupManager(QObject* parent)
     : QObject(parent)
 {
@@ -223,3 +225,4 @@ QStringList BackupManager::oldBackups() const
   return findBackupDirectoriesToDelete(backups);
 }
 
+#include "backupmanager.moc"

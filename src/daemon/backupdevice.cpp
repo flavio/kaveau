@@ -38,6 +38,8 @@
 #include <solid/storagedrive.h>
 #include <solid/storageaccess.h>
 
+using namespace Kaveau;
+
 BackupDevice::BackupDevice(QObject* parent)
   : QObject(parent)
 {
@@ -205,3 +207,5 @@ void BackupDevice::slotBackupDirectoriesRemoved(KJob* job)
   else
     emit backupDirectoriesRemoved(true, "");
 }
+
+#include "backupdevice.moc"

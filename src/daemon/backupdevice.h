@@ -29,7 +29,7 @@
 class KJob;
 
 /*!
-  Class used for interacting with backup devices
+  Class used to interact with backup devices
 */
 class BackupDevice : public QObject
 {
@@ -44,7 +44,7 @@ class BackupDevice : public QObject
     //! returns true if the device can be used for doing backups
     bool isAccesible();
 
-    //! performs the operations needed for making the device accessible
+    //! performs the operations needed to make the device accessible
     void setup();
 
     //! creates the directory where the back ups will be stored

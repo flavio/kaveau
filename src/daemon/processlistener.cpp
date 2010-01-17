@@ -71,3 +71,5 @@ bool ProcessListener::isOk()
 {
   return !m_stdErr.isEmpty();
 }
+
+#include "processlistener.moc"
