@@ -26,71 +26,75 @@
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 
+#include "kaveau_utils_export.h"
+
 class KConfig;
 
-/*!
-  Class used for saving kaveau settings to disk
-*/
-class Settings
-{
-  public:
-    Settings();
+namespace Kaveau {
+  /*!
+    Class used to save kaveau settings to disk
+  */
+  class KAVEAU_UTILS_EXPORT Settings
+  {
+    public:
+      Settings();
 
-    /*!
-      Constructor
-      \param source path of the directory to backup
-      \param diskUdi UDI of the external disk used for backups
-      \param relative path of the backups, external disk mount point is the base path
-      \param excludeList list of items to exclude from the backup
-      \param latestBackupTime latest backup time
-    */
-    Settings( QString source, QString diskUdi, QString relativeDest,
-            QStringList excludeList,
-            QDateTime lastBackupTime = QDateTime());
-    
-    ~Settings();
-    
-    static Settings* global();
+      /*!
+        Constructor
+        \param source path of the directory to backup
+        \param diskUdi UDI of the external disk used for backups
+        \param relative path of the backups, external disk mount point is the base path
+        \param excludeList list of items to exclude from the backup
+        \param latestBackupTime latest backup time
+      */
+      Settings( QString source, QString diskUdi, QString relativeDest,
+              QStringList excludeList,
+              QDateTime lastBackupTime = QDateTime());
 
-    QString source() const;
-    void setSource(const QString& source);
+      ~Settings();
 
-    QString diskUdi() const;
-    void setDiskUdi(const QString& uid);
-    bool isBackupDeviceConfigured();
+      static Settings* global();
 
-    QString dest() const;
+      QString source() const;
+      void setSource(const QString& source);
 
-    QString mount() const;
-    void setMount(const QString& mount);
+      QString diskUdi() const;
+      void setDiskUdi(const QString& uid);
+      bool isBackupDeviceConfigured();
 
-    QString relativeDest() const;
-    void setRelativeDest(const QString& relativeDest);
-    void updateRelativeDesc();
+      QString dest() const;
 
-    QStringList excludeList() const;
-    void setExcludeList(const QStringList& excludeList);
+      QString mount() const;
+      void setMount(const QString& mount);
 
-    QDateTime lastBackupTime() const;
-    void setLastBackupTime(const QDateTime&);
+      QString relativeDest() const;
+      void setRelativeDest(const QString& relativeDest);
+      void updateRelativeDesc();
 
-  private:
-    //! method used for calculating the final backup path, used when m_source or m_mount are changed
-    void updateDest();
+      QStringList excludeList() const;
+      void setExcludeList(const QStringList& excludeList);
 
-    QString m_source;
-    QString m_mount;
-    QString m_relativeDest;
-    QString m_dest;
-    QString m_diskUdi;
-    QStringList m_excludeList;
-    QDateTime m_lastBackupTime;
-    
-    KConfig *m_config;
+      QDateTime lastBackupTime() const;
+      void setLastBackupTime(const QDateTime&);
 
-    void clearConfigFile();
-    void loadConfigFile();
-    void saveConfigFile();
-};
+    private:
+      /*! Method used to calculate the final backup path
+          It's used when m_source or m_mount are changed */
+      void updateDest();
 
+      QString m_source;
+      QString m_mount;
+      QString m_relativeDest;
+      QString m_dest;
+      QString m_diskUdi;
+      QStringList m_excludeList;
+      QDateTime m_lastBackupTime;
+
+      KConfig *m_config;
+
+      void clearConfigFile();
+      void loadConfigFile();
+      void saveConfigFile();
+  };
+}
 #endif

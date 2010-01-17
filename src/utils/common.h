@@ -24,34 +24,39 @@
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 
-#define DATE_FORMAT "yyyy-MM-ddThh:mm:ss"
+#include "kaveau_utils_export.h"
 
-//! Converts bytes to human format (like 1Gb or 700Mb)
-const QString bytesToHuman(qulonglong bytes);
+namespace Kaveau {
 
-//! Calculates the relative backup path
-const QString calculateRelativeBackupPath();
+  #define DATE_FORMAT "yyyy-MM-ddThh:mm:ss"
 
-//! Calculates the final backup destination
-const QString calculateBackupDestination(const QString& mount, const QString& relative);
+  //! Converts bytes to human format (like 1Gb or 700Mb)
+  KAVEAU_UTILS_EXPORT const QString bytesToHuman(qulonglong bytes);
 
-//! Calculates the final backup destination, convenience method
-const QString calculateBackupDestination(const QString& mount);
+  //! Calculates the relative backup path
+  KAVEAU_UTILS_EXPORT const QString calculateRelativeBackupPath();
 
-/*!
-  Function used to find the old backup directories to remove.
-  Kaveau keeps:
-  \li hourly backups for the past 24 hours
-  \li daily backups for the past month
-  \li weekly backups until the external disk is full
-*/
-const QStringList findBackupDirectoriesToDelete(const QStringList& dirs);
+  //! Calculates the final backup destination
+  KAVEAU_UTILS_EXPORT const QString calculateBackupDestination(const QString& mount,
+                                                               const QString& relative);
+
+  //! Calculates the final backup destination, convenience method
+  KAVEAU_UTILS_EXPORT const QString calculateBackupDestination(const QString& mount);
+
+  /*!
+    Function used to find the old backup directories to remove.
+    Kaveau keeps:
+    \li hourly backups for the past 24 hours
+    \li daily backups for the past month
+    \li weekly backups until the external disk is full
+  */
+  KAVEAU_UTILS_EXPORT const QStringList findBackupDirectoriesToDelete(const QStringList& dirs);
 
 
-/*!
-  Function used to check if a certain device can be used by kaveau.
-  \param udi the udi of the device to check
-*/
-bool isDeviceInteresting(const QString& udi);
-
+  /*!
+    Function used to check if a certain device can be used by kaveau.
+    \param udi the udi of the device to check
+  */
+  KAVEAU_UTILS_EXPORT bool isDeviceInteresting(const QString& udi);
+}
 #endif // COMMON_H

@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+using namespace Kaveau;
+
 K_GLOBAL_STATIC (Settings, globalConfigManager)
 
 Settings::Settings()

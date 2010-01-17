@@ -5,11 +5,20 @@ INCLUDE_DIRECTORIES(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES}
 set(kaveau_utils_SRC
     common.cpp
     settings.cpp
-    processlistener.cpp
-    backupmanager.cpp
-    backupdevice.cpp
 )
 
-KDE4_ADD_LIBRARY(kaveau_utils STATIC ${kaveau_utils_SRC})
+KDE4_ADD_LIBRARY(kaveau_utils SHARED ${kaveau_utils_SRC})
+#ADD_LIBRARY(kaveau_utils SHARED ${kaveau_utils_SRC})
 target_link_libraries(kaveau_utils ${KDE4_KIO_LIBS} ${KDE4_SOLID_LIBS})
+
+set(KAVEAU_UTILS_LIB_MAJOR_VERSION "0")
+set(KAVEAU_UTILS_LIB_MINOR_VERSION "0")
+set(KAVEAU_UTILS_LIB_PATCH_VERSION "1")
+
+set_target_properties(kaveau_utils PROPERTIES
+  VERSION ${KAVEAU_UTILS_LIB_MAJOR_VERSION}.${KAVEAU_UTILS_LIB_MINOR_VERSION}.${KAVEAU_UTILS_LIB_PATCH_VERSION}
+  SOVERSION ${KAVEAU_UTILS_LIB_MAJOR_VERSION}
+  DEFINE_SYMBOL KAVEAU_MAKEDLL
+  )
+
 
