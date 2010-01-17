@@ -1,18 +1,18 @@
-project(kaveaudaemon)
-
-include_directories(
-  ${CMAKE_SOURCE_DIR}
+include_directories( ../utils
+  ${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES}
   ${CMAKE_SOURCE_DIR}/utils ${CMAKE_BINARY_DIR}/utils
-  ${kaveaudaemon_BINARY_DIR}
-  )
+  ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR})
 
 # KaveauDaemon
 # -----------------------------
 
 set(kaveaudaemon_SRCS
+  processlistener.cpp
+  backupmanager.cpp
+  backupdevice.cpp
   kaveaudaemon.cpp
-  main.cpp
-  )
+  main.cpp)
 
 # Server configuration
 #kde4_add_kcfg_files(kaveaudaemon_SRCS nepomukserversettings.kcfgc)
@@ -33,7 +33,7 @@ set(kaveaudaemon_SRCS
 kde4_add_kdeinit_executable(kaveaudaemon ${kaveaudaemon_SRCS})
 
 target_link_libraries(kdeinit_kaveaudaemon
-  ${KDE4_KDEUI_LIBS} kaveau_utils
+  ${KDE4_KDEUI_LIBS} ${KDE4_KIO_LIBS} ${KDE4_SOLID_LIBS} kaveau_utils
   )
 
 target_link_libraries(kaveaudaemon
